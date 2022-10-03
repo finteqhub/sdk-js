@@ -1,0 +1,17 @@
+{
+  "name": "sdk-js",
+  "version": "0.1.0",
+  "description": "SDK for interacting with FinteqHub processing API",
+  "main": "./dist/index.js",
+  "typings": "./dist/index.d.ts",
+  "files": [
+    "dist/*"
+  ],
+  "author": "FinteqHub",
+  "devDependencies": {
+    "typescript": "^4.8.3"
+  },
+  "scripts": {
+    "build": "tsc"
+  }
+}
