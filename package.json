@@ -1,8 +1,9 @@
 {
-  "name": "sdk-js",
+  "name": "@finteqhub/sdk-js",
   "version": "0.1.0",
   "description": "SDK for interacting with FinteqHub processing API",
   "main": "./dist/index.js",
+  "repository": "https://github.com/finteqhub/sdk-js.git",
   "typings": "./dist/index.d.ts",
   "files": [
     "dist/*"
@@ -13,5 +14,8 @@
   },
   "scripts": {
     "build": "tsc"
-  }
+  },
+  "publishConfig": {
+    "registry":"https://npm.pkg.github.com"
+  },
 }
