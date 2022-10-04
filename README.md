@@ -3,12 +3,7 @@
 Use `new FinteqHubProcessing(apiUrl: string, fingerprintVisitorId: string, merchantId: string, sessionId: string)` to create an instance of the FinteqHubProcessing object. The FinteqHubProcessing object is your entrypoint to FinteqHub processing SDK.
 
 ```
-const processing = new FinteqHubProcessing(
-  'https://processing.api.burp.digital',
-  'JVHNI6YRPMaRoUf2vxJS',
-  'softswiss',
-  '018388c0-dd8a-1068-6daf-7522ae777e0f'
-);
+const processing = new FinteqHubProcessing('api-url', 'fingerprint-visitor-id', 'merchant-id', 'session-id');
 ```
 
 ## processing.submitForm(data)
