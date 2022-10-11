@@ -78,7 +78,7 @@ export class FinteqHubProcessing {
               reject(new Error("unknown process operation type"));
             }
           });
-        } else if (response.status === 400) {
+        } else {
           response
             .json()
             .then((result) => reject(new Error(result.error)))
