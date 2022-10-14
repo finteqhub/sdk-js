@@ -8,11 +8,11 @@ const processing = new FinteqHubProcessing('api-url', 'fingerprint-visitor-id', 
 
 ## processing.submitForm(data)
 
-Use `processing.submitForm` to submit transaction. When called, `processing.submitForm` will attempt to complete any required actions to process transaction. This method returns a Promise which resolves with a string (redirect url) or Error that describes the failure.
+Use `processing.submitForm` to submit transaction. When called, `processing.submitForm` will attempt to complete any required actions to process transaction. This method returns a promise which resolves with response (`{ "type": "redirect", "redirectUrl": string}`) or error that describes the failure.
 
 ```
 processing
   .submitForm(data)
-  .then(redirectUrl => window.location.replace(redirectUrl))
+  .then(result => console.log(result))
   .catch(error => console.warn(error));
 ```

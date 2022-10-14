@@ -30,3 +30,17 @@ export type SubmitData = {
   billingAddress: BillingAddress;
   payer: Payer;
 };
+
+export type ProcessOperationRedirectResponse = {
+  type: "redirect";
+  redirectUrl: string;
+  metadata: unknown;
+};
+
+export type ProcessOperationResponse =
+  | {
+      type: "submitForm";
+      formUrl: string;
+      metadata: unknown;
+    }
+  | ProcessOperationRedirectResponse;

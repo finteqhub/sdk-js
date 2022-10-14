@@ -1,7 +1,11 @@
-import { SubmitData } from "./typings";
+import {
+  ProcessOperationRedirectResponse,
+  ProcessOperationResponse,
+  SubmitData,
+} from "./typings";
 import { uuid } from "./utils";
 
-type Resolve = (url: string) => void;
+type Resolve = (result: ProcessOperationRedirectResponse) => void;
 type Reject = (error: Error) => void;
 
 export class FinteqHubProcessing {
@@ -55,9 +59,9 @@ export class FinteqHubProcessing {
     this.sendPost(url, {})
       .then((response) => {
         if (response.status === 200) {
-          response.json().then((result) => {
+          response.json().then((result: ProcessOperationResponse) => {
             if (result.type === "redirect") {
-              resolve(result.redirectUrl);
+              resolve(result);
             } else if (result.type === "submitForm") {
               let iframe: HTMLIFrameElement | null =
                 document.createElement("iframe");
