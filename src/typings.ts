@@ -13,7 +13,7 @@ export type Payer = {
   country: string;
   birthDate: string;
   phoneNumber: string;
-  phoneCode: string;
+  phoneCountryCode: string;
 };
 
 export type BillingAddress = {
@@ -21,7 +21,7 @@ export type BillingAddress = {
   city: string;
   state: string;
   country: string;
-  zipCode: string;
+  postalCode: string;
 };
 
 export type SubmitData = {
