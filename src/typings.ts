@@ -4,6 +4,7 @@ export type Card = {
   expiryMonth: number;
   expiryYear: number;
   CVV: string;
+  tokenize: boolean;
 };
 
 export type Payer = {

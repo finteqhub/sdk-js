@@ -1,6 +1,7 @@
 import "whatwg-fetch";
 
 import { FinteqHubProcessing } from "./processing";
+import { SubmitData } from "./typings";
 
 describe(`function ${FinteqHubProcessing.prototype.submitForm.name} should work correctly`, () => {
   const apiUrl = "api-url";
@@ -15,7 +16,7 @@ describe(`function ${FinteqHubProcessing.prototype.submitForm.name} should work 
     sessionId
   );
 
-  const data = {
+  const data: SubmitData = {
     type: "CartographerCredentials",
     card: {
       number: "1234567890123456",
@@ -30,7 +31,7 @@ describe(`function ${FinteqHubProcessing.prototype.submitForm.name} should work 
       city: "Moscow",
       state: "US",
       country: "US",
-      zipCode: "123456",
+      postalCode: "123456",
     },
     payer: {
       firstName: "Boris Britva",
@@ -39,7 +40,7 @@ describe(`function ${FinteqHubProcessing.prototype.submitForm.name} should work 
       country: "US",
       birthDate: "1996-10-03",
       phoneNumber: "297776655",
-      phoneCode: "+375",
+      phoneCountryCode: "+375",
     },
   };
 
