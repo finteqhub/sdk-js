@@ -58,6 +58,10 @@ describe(`function ${FinteqHubProcessing.prototype.submitForm.name} should work 
 
   test(`type: redirect, status: 200`, async () => {
     let count = 0;
+    const resolve = {
+      type: "redirect",
+      redirectUrl,
+    };
 
     const fetchFn = (window.fetch = jest.fn(() => {
       count += 1;
@@ -69,17 +73,14 @@ describe(`function ${FinteqHubProcessing.prototype.submitForm.name} should work 
               operationId,
             });
           } else {
-            return Promise.resolve({
-              type: "redirect",
-              redirectUrl,
-            });
+            return Promise.resolve(resolve);
           }
         },
       });
     }) as jest.Mock);
 
     const res = await processing.submitForm(data);
-    expect(res).toEqual(redirectUrl);
+    expect(res).toEqual(resolve);
 
     expect(fetchFn).toHaveBeenCalledTimes(2);
     expect(fetchFn).toHaveBeenCalledWith(
@@ -143,6 +144,10 @@ describe(`function ${FinteqHubProcessing.prototype.submitForm.name} should work 
   test(`type: submit, status: 200`, async () => {
     let count = 0;
     const formUrl = "form.url";
+    const resolve = {
+      type: "redirect",
+      redirectUrl,
+    };
 
     const fetchFn = (window.fetch = jest.fn(() => {
       count += 1;
@@ -159,10 +164,7 @@ describe(`function ${FinteqHubProcessing.prototype.submitForm.name} should work 
               formUrl,
             });
           } else if (count === 3) {
-            return Promise.resolve({
-              type: "redirect",
-              redirectUrl,
-            });
+            return Promise.resolve(resolve);
           }
         },
       });
@@ -174,9 +176,9 @@ describe(`function ${FinteqHubProcessing.prototype.submitForm.name} should work 
     document.body.removeChild = jest.fn();
     document.createElement = jest.fn(() => iframeMock) as jest.Mock;
 
-    const promise = processing.submitForm(data).then((res) => {
-      expect(res).toEqual(redirectUrl);
-    });
+    const promise = processing
+      .submitForm(data)
+      .then((res) => expect(res).toEqual(resolve));
 
     setTimeout(() => {
       expect(iframeMock.src).toEqual(formUrl);
