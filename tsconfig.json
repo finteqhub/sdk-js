@@ -5,6 +5,7 @@
     "module": "es6",
     "outDir": "./dist",
     "strict": false,
+    "moduleResolution": "node",
     "target": "es6"
   },
   "include": ["index.ts"],
