@@ -1,11 +1,8 @@
-import {
-  ProcessOperationRedirectResponse,
-  ProcessOperationResponse,
-  SubmitData,
-} from "./typings";
+import { ProcessOperationRedirectResponse, ProcessOperationResponse, SessionResponse, SubmitData } from "./typings";
 import { uuid } from "./utils";
 
-type Resolve = (result: ProcessOperationRedirectResponse) => void;
+type ResolveSubmitForm = (result: ProcessOperationRedirectResponse) => void;
+type ResolveSession = (result: SessionResponse) => void;
 type Reject = (error: Error) => void;
 
 export class FinteqHubProcessing {
@@ -14,40 +11,33 @@ export class FinteqHubProcessing {
   private merchantId: string;
   private sessionId: string;
 
-  constructor(
-    apiUrl: string,
-    fingerprintVisitorId: string,
-    merchantId: string,
-    sessionId: string
-  ) {
+  constructor(apiUrl: string, fingerprintVisitorId: string, merchantId: string, sessionId: string) {
     this.apiUrl = apiUrl;
     this.fingerprintVisitorId = fingerprintVisitorId;
     this.merchantId = merchantId;
     this.sessionId = sessionId;
   }
 
-  public submitForm(data: SubmitData) {
-    const promise = new Promise((resolve: Resolve, reject: Reject) => {
-      this.sendPost(`${this.apiUrl}/v2/transactions/submit-form`, data)
+  public getSession() {
+    const promise = new Promise((resolve: ResolveSession, reject: Reject) => {
+      fetch(`${this.apiUrl}/v1/sessions/${this.sessionId}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json;charset=UTF-8",
+          "x-merchant-id": this.merchantId,
+        },
+      })
         .then((response) => {
-          if (response.status === 200) {
-            response.json().then((result) => {
-              if (result.error) {
+          response
+            .json()
+            .then((result) => {
+              if (result.error || response.status !== 200) {
                 reject(new Error(result.error));
               } else {
-                this.processOperation(
-                  `${this.apiUrl}/v1/operations/${result.operationId}`,
-                  resolve,
-                  reject
-                );
+                resolve(result);
               }
-            });
-          } else {
-            response
-              .json()
-              .then((result) => reject(new Error(result.error)))
-              .catch((error) => reject(error));
-          }
+            })
+            .catch((error) => reject(error));
         })
         .catch((error) => reject(error));
     });
@@ -55,39 +45,59 @@ export class FinteqHubProcessing {
     return promise;
   }
 
-  private processOperation(url: string, resolve: Resolve, reject: Reject) {
-    this.sendPost(url, {})
-      .then((response) => {
-        if (response.status === 200) {
-          response.json().then((result: ProcessOperationResponse) => {
-            if (result.type === "redirect") {
-              resolve(result);
-            } else if (result.type === "submitForm") {
-              let iframe: HTMLIFrameElement | null =
-                document.createElement("iframe");
-
-              iframe.src = result.formUrl;
-              iframe.style.display = "none";
-
-              document.body.appendChild(iframe);
-
-              iframe.onload = () => {
-                this.processOperation(url, resolve, reject);
-                if (iframe) {
-                  document.body.removeChild(iframe);
-                  iframe = null;
-                }
-              };
-            } else {
-              reject(new Error("unknown process operation type"));
-            }
-          });
-        } else {
+  public submitForm(data: SubmitData) {
+    const promise = new Promise((resolve: ResolveSubmitForm, reject: Reject) => {
+      this.sendPost(`${this.apiUrl}/v2/transactions/submit-form`, data)
+        .then((response) => {
           response
             .json()
-            .then((result) => reject(new Error(result.error)))
+            .then((result) => {
+              if (result.error || response.status !== 200) {
+                reject(new Error(result.error));
+              } else {
+                this.processOperation(`${this.apiUrl}/v1/operations/${result.operationId}`, resolve, reject);
+              }
+            })
             .catch((error) => reject(error));
-        }
+        })
+        .catch((error) => reject(error));
+    });
+
+    return promise;
+  }
+
+  private processOperation(url: string, resolve: ResolveSubmitForm, reject: Reject) {
+    this.sendPost(url, {})
+      .then((response) => {
+        response
+          .json()
+          .then((result: ProcessOperationResponse) => {
+            if (response.status === 200) {
+              if (result.type === "redirect") {
+                resolve(result);
+              } else if (result.type === "submitForm") {
+                let iframe: HTMLIFrameElement | null = document.createElement("iframe");
+
+                iframe.src = result.formUrl;
+                iframe.style.display = "none";
+
+                document.body.appendChild(iframe);
+
+                iframe.onload = () => {
+                  this.processOperation(url, resolve, reject);
+                  if (iframe) {
+                    document.body.removeChild(iframe);
+                    iframe = null;
+                  }
+                };
+              } else {
+                reject(new Error("unknown process operation type"));
+              }
+            } else {
+              reject(new Error((result as undefined as { error: string }).error));
+            }
+          })
+          .catch((error) => reject(error));
       })
       .catch((error) => reject(error));
   }
@@ -101,7 +111,6 @@ export class FinteqHubProcessing {
         "x-request-id": uuid(),
         "x-fingerprint": this.fingerprintVisitorId,
         "x-session-id": this.sessionId,
-        "x-project-id": "017cdbcb-ca22-68f1-95a9-edb698dd063c", // todo: fix it
       },
       body: JSON.stringify(data),
     });
