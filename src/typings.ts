@@ -26,7 +26,7 @@ export type Address = {
 };
 
 export type SessionResponse = {
-  customer: Customer;
+  customer?: Customer;
   initCredentials: {
     billingAddress?: Address;
     card?: Card;
