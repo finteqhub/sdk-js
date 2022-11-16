@@ -26,15 +26,15 @@ export type Address = {
 };
 
 export type SessionResponse = {
-  customer?: Customer;
-  initCredentials?: {
+  customer: Customer;
+  initCredentials: {
     billingAddress?: Address;
     card?: Card;
     payer?: Payer;
     shippingAddress: Address;
   };
   operation: OperationSession;
-  paymentMethods?: PaymentMethods;
+  paymentMethods: PaymentMethods;
   session: Session;
 };
 
@@ -67,13 +67,13 @@ export type OperationSession = {
 };
 
 export type PaymentMethods = {
-  credentials?: {
+  credentials: {
     [key: string]: {
       fields?: { [key: string]: FieldDetails };
       required?: Array<string>;
     };
   };
-  paymentMethods?: {
+  paymentMethods: {
     [key: string]: {
       friendlyName?: string;
       logo?: string;
