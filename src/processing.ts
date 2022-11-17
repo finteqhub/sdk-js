@@ -20,88 +20,78 @@ export class FinteqHubProcessing {
   }
 
   public getSession() {
-    const promise = new Promise((resolve: ResolveSession, reject: Reject) => {
-      fetch(`${this.apiUrl}/v1/sessions/${this.sessionId}`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json;charset=UTF-8",
-          "x-merchant-id": this.merchantId,
-        },
-      })
-        .then((response) => {
-          response
-            .json()
-            .then((result) => {
-              if (result.error || response.status !== 200) {
-                reject(new Error(result.error));
-              } else {
-                this.projectId = (result as SessionResponse).operation?.projectId;
-                resolve(result);
-              }
-            })
-            .catch((error) => reject(error));
-        })
-        .catch((error) => reject(error));
-    });
+    return new Promise(async (resolve: ResolveSession, reject: Reject) => {
+      try {
+        const response = await fetch(`${this.apiUrl}/v1/sessions/${this.sessionId}`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json;charset=UTF-8",
+            "x-merchant-id": this.merchantId,
+          },
+        });
+        const result = await response.json();
 
-    return promise;
+        if (result.error || response.status !== 200) {
+          reject(new Error(result.error));
+        } else {
+          this.projectId = (result as SessionResponse).operation?.projectId;
+          resolve(result);
+        }
+      } catch (e) {
+        reject(e);
+      }
+    });
   }
 
   public submitForm(data: SubmitData) {
-    const promise = new Promise((resolve: ResolveSubmitForm, reject: Reject) => {
-      this.sendPost(`${this.apiUrl}/v2/transactions/submit-form`, data)
-        .then((response) => {
-          response
-            .json()
-            .then((result) => {
-              if (result.error || response.status !== 200) {
-                reject(new Error(result.error));
-              } else {
-                this.processOperation(`${this.apiUrl}/v1/operations/${result.operationId}`, resolve, reject);
-              }
-            })
-            .catch((error) => reject(error));
-        })
-        .catch((error) => reject(error));
-    });
+    return new Promise(async (resolve: ResolveSubmitForm, reject: Reject) => {
+      try {
+        const response = await this.sendPost(`${this.apiUrl}/v2/transactions/submit-form`, data);
+        const result = await response.json();
 
-    return promise;
+        if (result.error || response.status !== 200) {
+          reject(new Error(result.error));
+        } else {
+          this.processOperation(`${this.apiUrl}/v1/operations/${result.operationId}`, resolve, reject);
+        }
+      } catch (e) {
+        reject(e);
+      }
+    });
   }
 
-  private processOperation(url: string, resolve: ResolveSubmitForm, reject: Reject) {
-    this.sendPost(url, {})
-      .then((response) => {
-        response
-          .json()
-          .then((result: ProcessOperationResponse) => {
-            if (response.status === 200) {
-              if (result.type === "redirect") {
-                resolve(result);
-              } else if (result.type === "submitForm") {
-                let iframe: HTMLIFrameElement | null = document.createElement("iframe");
+  private async processOperation(url: string, resolve: ResolveSubmitForm, reject: Reject) {
+    try {
+      const response = await this.sendPost(url, {});
+      const result = await response.json();
 
-                iframe.src = result.formUrl;
-                iframe.style.display = "none";
+      if (response.status === 200) {
+        if (result.type === "redirect") {
+          resolve(result);
+        } else if (result.type === "submitForm") {
+          let iframe: HTMLIFrameElement | null = document.createElement("iframe");
 
-                document.body.appendChild(iframe);
+          iframe.src = result.formUrl;
+          iframe.style.display = "none";
 
-                iframe.onload = () => {
-                  this.processOperation(url, resolve, reject);
-                  if (iframe) {
-                    document.body.removeChild(iframe);
-                    iframe = null;
-                  }
-                };
-              } else {
-                reject(new Error("unknown process operation type"));
-              }
-            } else {
-              reject(new Error((result as undefined as { error: string }).error));
+          document.body.appendChild(iframe);
+
+          iframe.onload = () => {
+            this.processOperation(url, resolve, reject);
+            if (iframe) {
+              document.body.removeChild(iframe);
+              iframe = null;
             }
-          })
-          .catch((error) => reject(error));
-      })
-      .catch((error) => reject(error));
+          };
+        } else {
+          reject(new Error("unknown process operation type"));
+        }
+      } else {
+        reject(new Error(result.error));
+      }
+    } catch (e) {
+      reject(e);
+    }
   }
 
   private sendPost(url: string, data: {}) {
