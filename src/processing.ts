@@ -10,6 +10,7 @@ export class FinteqHubProcessing {
   private fingerprintVisitorId: string;
   private merchantId: string;
   private sessionId: string;
+  private projectId: string;
 
   constructor(apiUrl: string, fingerprintVisitorId: string, merchantId: string, sessionId: string) {
     this.apiUrl = apiUrl;
@@ -34,6 +35,7 @@ export class FinteqHubProcessing {
               if (result.error || response.status !== 200) {
                 reject(new Error(result.error));
               } else {
+                this.projectId = (result as SessionResponse).operation?.projectId;
                 resolve(result);
               }
             })
@@ -111,6 +113,7 @@ export class FinteqHubProcessing {
         "x-request-id": uuid(),
         "x-fingerprint": this.fingerprintVisitorId,
         "x-session-id": this.sessionId,
+        "x-project-id": this.projectId,
       },
       body: JSON.stringify(data),
     });
