@@ -1,11 +1,8 @@
-import {
-  ProcessOperationRedirectResponse,
-  ProcessOperationResponse,
-  SubmitData,
-} from "./typings";
+import { ProcessOperationRedirectResponse, ProcessOperationResponse, SessionResponse, SubmitData } from "./typings";
 import { uuid } from "./utils";
 
-type Resolve = (result: ProcessOperationRedirectResponse) => void;
+type ResolveSubmitForm = (result: ProcessOperationRedirectResponse) => void;
+type ResolveSession = (result: SessionResponse) => void;
 type Reject = (error: Error) => void;
 
 export class FinteqHubProcessing {
@@ -13,83 +10,88 @@ export class FinteqHubProcessing {
   private fingerprintVisitorId: string;
   private merchantId: string;
   private sessionId: string;
+  private projectId: string;
 
-  constructor(
-    apiUrl: string,
-    fingerprintVisitorId: string,
-    merchantId: string,
-    sessionId: string
-  ) {
+  constructor(apiUrl: string, fingerprintVisitorId: string, merchantId: string, sessionId: string) {
     this.apiUrl = apiUrl;
     this.fingerprintVisitorId = fingerprintVisitorId;
     this.merchantId = merchantId;
     this.sessionId = sessionId;
   }
 
-  public submitForm(data: SubmitData) {
-    const promise = new Promise((resolve: Resolve, reject: Reject) => {
-      this.sendPost(`${this.apiUrl}/v2/transactions/submit-form`, data)
-        .then((response) => {
-          if (response.status === 200) {
-            response.json().then((result) => {
-              if (result.error) {
-                reject(new Error(result.error));
-              } else {
-                this.processOperation(
-                  `${this.apiUrl}/v1/operations/${result.operationId}`,
-                  resolve,
-                  reject
-                );
-              }
-            });
-          } else {
-            response
-              .json()
-              .then((result) => reject(new Error(result.error)))
-              .catch((error) => reject(error));
-          }
-        })
-        .catch((error) => reject(error));
-    });
+  public getSession() {
+    return new Promise(async (resolve: ResolveSession, reject: Reject) => {
+      try {
+        const response = await fetch(`${this.apiUrl}/v1/sessions/${this.sessionId}`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json;charset=UTF-8",
+            "x-merchant-id": this.merchantId,
+          },
+        });
+        const result = await response.json();
 
-    return promise;
+        if (result.error || response.status !== 200) {
+          reject(new Error(result.error));
+        } else {
+          this.projectId = (result as SessionResponse).operation?.projectId;
+          resolve(result);
+        }
+      } catch (e) {
+        reject(e);
+      }
+    });
   }
 
-  private processOperation(url: string, resolve: Resolve, reject: Reject) {
-    this.sendPost(url, {})
-      .then((response) => {
-        if (response.status === 200) {
-          response.json().then((result: ProcessOperationResponse) => {
-            if (result.type === "redirect") {
-              resolve(result);
-            } else if (result.type === "submitForm") {
-              let iframe: HTMLIFrameElement | null =
-                document.createElement("iframe");
+  public submitForm(data: SubmitData) {
+    return new Promise(async (resolve: ResolveSubmitForm, reject: Reject) => {
+      try {
+        const response = await this.sendPost(`${this.apiUrl}/v2/transactions/submit-form`, data);
+        const result = await response.json();
 
-              iframe.src = result.formUrl;
-              iframe.style.display = "none";
-
-              document.body.appendChild(iframe);
-
-              iframe.onload = () => {
-                this.processOperation(url, resolve, reject);
-                if (iframe) {
-                  document.body.removeChild(iframe);
-                  iframe = null;
-                }
-              };
-            } else {
-              reject(new Error("unknown process operation type"));
-            }
-          });
+        if (result.error || response.status !== 200) {
+          reject(new Error(result.error));
         } else {
-          response
-            .json()
-            .then((result) => reject(new Error(result.error)))
-            .catch((error) => reject(error));
+          this.processOperation(`${this.apiUrl}/v1/operations/${result.operationId}`, resolve, reject);
         }
-      })
-      .catch((error) => reject(error));
+      } catch (e) {
+        reject(e);
+      }
+    });
+  }
+
+  private async processOperation(url: string, resolve: ResolveSubmitForm, reject: Reject) {
+    try {
+      const response = await this.sendPost(url, {});
+      const result = await response.json();
+
+      if (response.status === 200) {
+        if (result.type === "redirect") {
+          resolve(result);
+        } else if (result.type === "submitForm") {
+          let iframe: HTMLIFrameElement | null = document.createElement("iframe");
+
+          iframe.src = result.formUrl;
+          iframe.style.display = "none";
+
+          document.body.appendChild(iframe);
+
+          iframe.onload = () => {
+            this.processOperation(url, resolve, reject);
+            if (iframe) {
+              document.body.removeChild(iframe);
+              iframe = null;
+            }
+          };
+        } else {
+          reject(new Error("unknown process operation type"));
+        }
+      } else {
+        reject(new Error(result.error));
+      }
+    } catch (e) {
+      reject(e);
+    }
   }
 
   private sendPost(url: string, data: {}) {
@@ -101,7 +103,7 @@ export class FinteqHubProcessing {
         "x-request-id": uuid(),
         "x-fingerprint": this.fingerprintVisitorId,
         "x-session-id": this.sessionId,
-        "x-project-id": "017cdbcb-ca22-68f1-95a9-edb698dd063c", // todo: fix it
+        "x-project-id": this.projectId,
       },
       body: JSON.stringify(data),
     });

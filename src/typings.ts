@@ -1,6 +1,6 @@
 export type Card = {
   number: string;
-  holderName: string;
+  holder: string;
   expiryMonth: number;
   expiryYear: number;
   CVV: string;
@@ -17,7 +17,7 @@ export type Payer = {
   phoneCountryCode: string;
 };
 
-export type BillingAddress = {
+export type Address = {
   address: string;
   city: string;
   state: string;
@@ -25,10 +25,80 @@ export type BillingAddress = {
   postalCode: string;
 };
 
+export type SessionResponse = {
+  customer?: Customer;
+  initCredentials: {
+    billingAddress?: Address;
+    card?: Card;
+    payer?: Payer;
+    shippingAddress: Address;
+  };
+  operation: OperationSession;
+  paymentMethods: PaymentMethods;
+  session: Session;
+};
+
+export interface Customer {
+  accounts?: CustomerAccount[];
+  country?: string;
+  id: string;
+  merchantCustomerId: string;
+  name?: string;
+  projectId: string;
+}
+
+export type CustomerAccount = {
+  id?: string;
+  integrationAccountId?: string;
+  paymentMethod?: string;
+  status?: string;
+  metadata?: any;
+};
+
+export type OperationSession = {
+  amount: string;
+  currencyCode: string;
+  failUrl: string;
+  operationId: string;
+  projectId: string;
+  successUrl: string;
+  transactionId: string;
+  transactionType: string;
+};
+
+export type PaymentMethods = {
+  credentials: {
+    [key: string]: {
+      fields?: { [key: string]: FieldDetails };
+      required?: Array<string>;
+    };
+  };
+  paymentMethods: {
+    [key: string]: {
+      friendlyName?: string;
+      logo?: string;
+      credentials?: string;
+    };
+  };
+};
+
+export type Session = {
+  ttl: number;
+  createdAt: string;
+};
+
+export type FieldDetails = {
+  type?: string;
+  friendlyName?: string;
+  description?: string;
+  format?: string;
+  example?: string;
+};
+
 export type SubmitData = {
   type: string;
   card: Card;
-  billingAddress: BillingAddress;
+  billingAddress: Address;
   payer: Payer;
 };
 
