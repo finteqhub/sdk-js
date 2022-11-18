@@ -178,6 +178,39 @@ describe(`function ${FinteqHubProcessing.prototype.submitForm.name} should work 
     });
   });
 
+  test(`should type: wait works correctly`, async () => {
+    let count = 0;
+    const resolve = {
+      type: "redirect",
+      redirectUrl,
+    };
+
+    const fetchFn = (window.fetch = jest.fn(() => {
+      count += 1;
+      return Promise.resolve({
+        status: 200,
+        json: () => {
+          if (count === 1) {
+            return Promise.resolve({
+              operationId,
+            });
+          } else if (count === 2) {
+            return Promise.resolve({
+              type: "wait",
+              waitInterval: 0.1,
+            });
+          } else {
+            return Promise.resolve(resolve);
+          }
+        },
+      });
+    }) as jest.Mock);
+
+    const res = await processing.submitForm(data);
+
+    expect(res).toEqual(resolve);
+  });
+
   test(`error on submit request`, async () => {
     const fetchFn = (window.fetch = jest.fn(() =>
       Promise.resolve({
