@@ -63,11 +63,15 @@ export class FinteqHubProcessing {
   private async processOperation(url: string, resolve: ResolveSubmitForm, reject: Reject) {
     try {
       const response = await this.sendPost(url, {});
-      const result = await response.json();
+      const result: ProcessOperationResponse = await response.json();
 
       if (response.status === 200) {
         if (result.type === "redirect") {
           resolve(result);
+        } else if (result.type === "wait") {
+          setTimeout(() => {
+            this.processOperation(url, resolve, reject);
+          }, result.waitInterval * 1000 || 10000);
         } else if (result.type === "submitForm") {
           let iframe: HTMLIFrameElement | null = document.createElement("iframe");
 
@@ -87,7 +91,7 @@ export class FinteqHubProcessing {
           reject(new Error("unknown process operation type"));
         }
       } else {
-        reject(new Error(result.error));
+        reject(new Error((result as unknown as { error: string }).error));
       }
     } catch (e) {
       reject(e);

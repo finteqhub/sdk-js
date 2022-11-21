@@ -114,4 +114,8 @@ export type ProcessOperationResponse =
       formUrl: string;
       metadata: unknown;
     }
+  | {
+      type: "wait";
+      waitInterval: number;
+    }
   | ProcessOperationRedirectResponse;
