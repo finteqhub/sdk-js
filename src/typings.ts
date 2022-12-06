@@ -3,7 +3,7 @@ export type Card = {
   holder: string;
   expiryMonth: number;
   expiryYear: number;
-  CVV: string;
+  cvv: string;
   tokenize: boolean;
 };
 
@@ -47,13 +47,31 @@ export interface Customer {
   projectId: string;
 }
 
-export type CustomerAccount = {
-  id?: string;
-  integrationAccountId?: string;
-  paymentMethod?: string;
-  status?: string;
-  metadata?: any;
-};
+export type CustomerAccount =
+  | {
+      id?: string;
+      integrationAccountId?: string;
+      paymentMethod?: string;
+      status?: string;
+      metadata?: any;
+    }
+  | {
+      id?: string;
+      integrationAccountId?: string;
+      paymentMethod?: "card-acquirer";
+      status?: string;
+      metadata?: {
+        iin: string;
+        brand: string;
+        type: string;
+        issuer: string;
+        issuer_country: string;
+        expiryMonth: number;
+        expiryYear: number;
+        maskedPAN: string;
+        tokenized?: boolean;
+      };
+    };
 
 export type OperationSession = {
   amount: string;
@@ -95,12 +113,24 @@ export type FieldDetails = {
   example?: string;
 };
 
-export type SubmitData = {
-  type: string;
-  card: Card;
-  billingAddress: Address;
-  payer: Payer;
-};
+export type SubmitData =
+  | {
+      customerAccountId: string;
+      credentials: {
+        card: {
+          cvv: string;
+        };
+        billingAddress: Address;
+        payer: Payer;
+      };
+    }
+  | {
+      credentials: {
+        card: Card;
+        billingAddress: Address;
+        payer: Payer;
+      };
+    };
 
 export type ProcessOperationRedirectResponse = {
   type: "redirect";
