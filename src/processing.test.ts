@@ -101,30 +101,31 @@ describe(`function ${FinteqHubProcessing.prototype.submitForm.name} should work 
   const processing = new FinteqHubProcessing(apiUrl, fingerprintVisitorId, merchantId, sessionId);
 
   const data: SubmitData = {
-    type: "CartographerCredentials",
-    card: {
-      number: "1234567890123456",
-      holder: "Boris Britva",
-      expiryMonth: 10,
-      expiryYear: 2100,
-      CVV: "111",
-      tokenize: true,
-    },
-    billingAddress: {
-      address: "Ulica huulica",
-      city: "Moscow",
-      state: "US",
-      country: "US",
-      postalCode: "123456",
-    },
-    payer: {
-      firstName: "Boris Britva",
-      lastName: "10",
-      email: "kek@bek.com",
-      country: "US",
-      birthDate: "1996-10-03",
-      phoneNumber: "297776655",
-      phoneCountryCode: "+375",
+    credentials: {
+      card: {
+        number: "1234567890123456",
+        holder: "Boris Britva",
+        expiryMonth: 10,
+        expiryYear: 2100,
+        cvv: "111",
+        tokenize: true,
+      },
+      billingAddress: {
+        address: "Ulica huulica",
+        city: "Moscow",
+        state: "US",
+        country: "US",
+        postalCode: "123456",
+      },
+      payer: {
+        firstName: "Boris Britva",
+        lastName: "10",
+        email: "kek@bek.com",
+        country: "US",
+        birthDate: "1996-10-03",
+        phoneNumber: "297776655",
+        phoneCountryCode: "+375",
+      },
     },
   };
 
