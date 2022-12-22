@@ -84,19 +84,27 @@ export type OperationSession = {
   transactionType: string;
 };
 
-export type PaymentMethods = {
-  credentials: {
-    [key: string]: {
-      fields?: { [key: string]: FieldDetails };
-      required?: Array<string>;
-    };
+export type PaymentMethod = {
+  friendlyName?: string;
+  logo?: string;
+  $credentials?: string;
+};
+
+export type PaymentMethodCredentials = {
+  [key: string]: {
+    fields?:
+      | {
+          [key: string]: FieldDetails;
+        }
+      | undefined;
+    required?: string[] | undefined;
   };
+};
+
+export type PaymentMethods = {
+  credentials: PaymentMethodCredentials;
   paymentMethods: {
-    [key: string]: {
-      friendlyName?: string;
-      logo?: string;
-      credentials?: string;
-    };
+    [key: string]: PaymentMethod;
   };
 };
 
@@ -117,19 +125,25 @@ export type SubmitData =
   | {
       customerAccountId: string;
       credentials: {
+        billingAddress: Address;
         card: {
           cvv: string;
         };
-        billingAddress: Address;
         payer: Payer;
       };
+      paymentMethodType: string;
     }
   | {
       credentials: {
-        card: Card;
         billingAddress: Address;
+        card: Card;
         payer: Payer;
       };
+      paymentMethodType: string;
+    }
+  | {
+      credentials: Record<string, string>;
+      paymentMethodType: string;
     };
 
 export type ProcessOperationRedirectResponse = {
