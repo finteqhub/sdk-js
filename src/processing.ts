@@ -27,6 +27,7 @@ export class FinteqHubProcessing {
           headers: {
             "Content-Type": "application/json;charset=UTF-8",
             "x-merchant-id": this.merchantId,
+            "x-request-id": uuid(),
           },
         });
         const result = await response.json();
