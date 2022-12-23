@@ -47,6 +47,7 @@ describe(`function ${FinteqHubProcessing.prototype.getSession.name} should work 
       headers: {
         "Content-Type": "application/json;charset=UTF-8",
         "x-merchant-id": merchantId,
+        "x-request-id": expect.anything(),
       },
     });
   });
