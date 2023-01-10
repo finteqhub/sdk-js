@@ -131,7 +131,7 @@ export type SubmitData =
         };
         payer: Payer;
       };
-      paymentMethodType: string;
+      paymentMethod: string;
     }
   | {
       credentials: {
@@ -139,11 +139,11 @@ export type SubmitData =
         card: Card;
         payer: Payer;
       };
-      paymentMethodType: string;
+      paymentMethod: string;
     }
   | {
       credentials: Record<string, string>;
-      paymentMethodType: string;
+      paymentMethod: string;
     };
 
 export type ProcessOperationRedirectResponse = {
