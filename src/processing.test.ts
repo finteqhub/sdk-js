@@ -128,7 +128,7 @@ describe(`function ${FinteqHubProcessing.prototype.submitForm.name} should work 
         phoneCountryCode: "+375",
       },
     },
-    paymentMethodType: "card-acquirer",
+    paymentMethod: "card-acquirer",
   };
 
   const headers = {
