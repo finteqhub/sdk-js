@@ -47,7 +47,7 @@ export class FinteqHubProcessing {
   public submitForm(data: SubmitData) {
     return new Promise(async (resolve: ResolveSubmitForm, reject: Reject) => {
       try {
-        const response = await this.sendPost(`${this.apiUrl}/v2/transactions/submit-form`, data);
+        const response = await this.sendPost(`${this.apiUrl}/v1/transactions/submit-form`, data);
         const result = await response.json();
 
         if (result.error || response.status !== 200) {
