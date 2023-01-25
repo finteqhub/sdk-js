@@ -169,7 +169,7 @@ describe(`function ${FinteqHubProcessing.prototype.submitForm.name} should work 
     expect(res).toEqual(resolve);
 
     expect(fetchFn).toHaveBeenCalledTimes(2);
-    expect(fetchFn).toHaveBeenCalledWith(`${apiUrl}/v2/transactions/submit-form`, {
+    expect(fetchFn).toHaveBeenCalledWith(`${apiUrl}/v1/transactions/submit-form`, {
       method: "POST",
       headers,
       body: JSON.stringify(data),
@@ -297,7 +297,7 @@ describe(`function ${FinteqHubProcessing.prototype.submitForm.name} should work 
       iframeMock.onload();
 
       expect(fetchFn).toHaveBeenCalledTimes(3);
-      expect(fetchFn).toHaveBeenCalledWith(`${apiUrl}/v2/transactions/submit-form`, {
+      expect(fetchFn).toHaveBeenCalledWith(`${apiUrl}/v1/transactions/submit-form`, {
         method: "POST",
         headers,
         body: JSON.stringify(data),
