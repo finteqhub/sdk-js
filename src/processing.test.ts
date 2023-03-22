@@ -119,10 +119,11 @@ describe(`function ${FinteqHubProcessing.prototype.submitForm.name} should work 
         postalCode: "123456",
       },
       payer: {
+        merchantCustomerId: "john@doe.com",
         firstName: "Boris Britva",
         lastName: "10",
         email: "kek@bek.com",
-        country: "US",
+        document: "document",
         birthDate: "1996-10-03",
         phoneNumber: "297776655",
         phoneCountryCode: "+375",

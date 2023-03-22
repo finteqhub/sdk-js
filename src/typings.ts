@@ -8,13 +8,14 @@ export type Card = {
 };
 
 export type Payer = {
+  birthDate: string;
+  document: string;
+  email: string;
   firstName: string;
   lastName: string;
-  email: string;
-  country: string;
-  birthDate: string;
-  phoneNumber: string;
+  merchantCustomerId: string;
   phoneCountryCode: string;
+  phoneNumber: string;
 };
 
 export type Address = {
