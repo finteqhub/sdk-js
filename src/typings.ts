@@ -43,6 +43,7 @@ export type SessionResponse = {
 export interface Customer {
   accounts?: CustomerAccount[];
   country?: string;
+  countryCode?: string;
   id: string;
   merchantCustomerId: string;
   name?: string;
