@@ -22,7 +22,8 @@ export type Address = {
   address: string;
   city: string;
   state: string;
-  country: string;
+  country?: string;
+  countryCode?: string;
   postalCode: string;
 };
 
@@ -42,6 +43,7 @@ export type SessionResponse = {
 export interface Customer {
   accounts?: CustomerAccount[];
   country?: string;
+  countryCode?: string;
   id: string;
   merchantCustomerId: string;
   name?: string;
