@@ -1,5 +1,10 @@
-import { ProcessOperationRedirectResponse, ProcessOperationResponse, SessionResponse, SubmitData } from "./typings";
-import { uuid } from "./utils";
+import {
+  ProcessOperationRedirectResponse,
+  ProcessOperationResponse,
+  SessionResponse,
+  SubmitData,
+} from "./typings";
+import { getDeviceData, uuid } from "./utils";
 
 type ResolveSubmitForm = (result: ProcessOperationRedirectResponse) => void;
 type ResolveSession = (result: SessionResponse) => void;
@@ -47,13 +52,23 @@ export class FinteqHubProcessing {
   public submitForm(data: SubmitData) {
     return new Promise(async (resolve: ResolveSubmitForm, reject: Reject) => {
       try {
-        const response = await this.sendPost(`${this.apiUrl}/v1/transactions/submit-form`, data);
+        const response = await this.sendPost(`${this.apiUrl}/v1/transactions/submit-form`, {
+          session: {
+            fingerprint: this.fingerprintVisitorId,
+            ...getDeviceData(),
+          },
+          ...data,
+        });
         const result = await response.json();
 
         if (result.error || response.status !== 200) {
           reject(new Error(result.error));
         } else {
-          this.processOperation(`${this.apiUrl}/v1/operations/${result.operationId}`, resolve, reject);
+          this.processOperation(
+            `${this.apiUrl}/v1/operations/${result.operationId}`,
+            resolve,
+            reject
+          );
         }
       } catch (e) {
         reject(e);
