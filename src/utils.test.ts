@@ -20,10 +20,6 @@ test(`function ${getDeviceType.name} should work correctly`, () => {
     },
   });
 
-  Object.defineProperty(window, "innerWidth", {
-    value: 411,
-  });
-
   expect(getDeviceType()).toEqual("phone");
 
   Object.defineProperty(window, "navigator", {
@@ -33,24 +29,7 @@ test(`function ${getDeviceType.name} should work correctly`, () => {
     },
   });
 
-  Object.defineProperty(window, "innerWidth", {
-    value: 1025,
-  });
-
   expect(getDeviceType()).toEqual("computer");
-
-  Object.defineProperty(window, "navigator", {
-    value: {
-      userAgent:
-        "Mozilla/5.0 (Linux; Android 11; SM-G991B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.181 Mobile Safari/537.36",
-    },
-  });
-
-  Object.defineProperty(window, "innerWidth", {
-    value: 768,
-  });
-
-  expect(getDeviceType()).toEqual("tablet");
 
   Object.defineProperty(window, "navigator", {
     value: {
@@ -78,6 +57,15 @@ test(`function ${getDeviceType.name} should work correctly`, () => {
   });
 
   expect(getDeviceType()).toEqual("wearable");
+
+  Object.defineProperty(window, "navigator", {
+    value: {
+      userAgent:
+        "Mozilla/5.0 (iPad; CPU OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko)",
+    },
+  });
+
+  expect(getDeviceType()).toEqual("tablet");
 });
 
 test(`function ${getDeviceData.name} should work correctly`, () => {

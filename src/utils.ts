@@ -24,7 +24,22 @@ export function uuid() {
 
 export function getDeviceType() {
   const userAgent = navigator.userAgent.toLowerCase();
-  const width = window.innerWidth;
+
+  if (/watch|wearable|galaxy watch|apple watch/i.test(userAgent)) {
+    return DeviceType.Wearable;
+  }
+
+  if (/mobile|android|iphone|ipod|blackberry|phone/i.test(userAgent)) {
+    return DeviceType.Phone;
+  }
+
+  if (/ipad|tablet/i.test(userAgent)) {
+    return DeviceType.Tablet;
+  }
+
+  if (/windows|mac os|x11|ubuntu|fedora|debian/i.test(userAgent)) {
+    return DeviceType.Computer;
+  }
 
   if (
     /smart[- ]?tv|hbbtv|netcast|viera|aquos|dtv|appletv|googletv|roku|hulu|smarttv/i.test(userAgent)
@@ -34,22 +49,6 @@ export function getDeviceType() {
 
   if (/xbox|playstation|nintendo|switch/i.test(userAgent)) {
     return DeviceType.Console;
-  }
-
-  if (/watch|wearable|galaxy watch|apple watch/i.test(userAgent)) {
-    return DeviceType.Wearable;
-  }
-
-  if (width > 1024) {
-    return DeviceType.Computer;
-  }
-
-  if (/ipad|tablet/i.test(userAgent) || (width >= 768 && width <= 1024)) {
-    return DeviceType.Tablet;
-  }
-
-  if (/mobile|android|iphone|ipod|blackberry|phone/i.test(userAgent)) {
-    return DeviceType.Phone;
   }
 
   return DeviceType.Unknown;
