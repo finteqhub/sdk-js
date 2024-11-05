@@ -16,6 +16,22 @@ test(`function ${getDeviceType.name} should work correctly`, () => {
   Object.defineProperty(window, "navigator", {
     value: {
       userAgent:
+        "Mozilla/5.0 (Apple Watch; CPU WatchOS 7_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0 Mobile/15E148 Safari/604.1",
+    },
+  });
+  expect(getDeviceType()).toEqual("wearable");
+
+  Object.defineProperty(window, "navigator", {
+    value: {
+      userAgent:
+        "Mozilla/5.0 (iPad; CPU OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko)",
+    },
+  });
+  expect(getDeviceType()).toEqual("tablet");
+
+  Object.defineProperty(window, "navigator", {
+    value: {
+      userAgent:
         "Mozilla/5.0 (SmartTV; LG WebOS TV 4.0; 55UK6500MLA) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/68.0.3440.106 Safari/537.36 WebAppManager",
     },
   });
@@ -30,24 +46,6 @@ test(`function ${getDeviceType.name} should work correctly`, () => {
   });
 
   expect(getDeviceType()).toEqual("console");
-
-  Object.defineProperty(window, "navigator", {
-    value: {
-      userAgent:
-        "Mozilla/5.0 (Apple Watch; CPU WatchOS 7_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0 Mobile/15E148 Safari/604.1",
-    },
-  });
-
-  expect(getDeviceType()).toEqual("wearable");
-
-  Object.defineProperty(window, "navigator", {
-    value: {
-      userAgent:
-        "Mozilla/5.0 (iPad; CPU OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko)",
-    },
-  });
-
-  expect(getDeviceType()).toEqual("tablet");
 
   Object.defineProperty(window, "navigator", {
     value: {
