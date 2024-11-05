@@ -2,6 +2,7 @@ import "whatwg-fetch";
 
 import { FinteqHubProcessing } from "./processing";
 import { SubmitData } from "./typings";
+import { getDeviceData } from "./utils";
 
 describe(`function ${FinteqHubProcessing.prototype.getSession.name} should work correctly`, () => {
   const apiUrl = "api-url";
@@ -173,7 +174,13 @@ describe(`function ${FinteqHubProcessing.prototype.submitForm.name} should work 
     expect(fetchFn).toHaveBeenCalledWith(`${apiUrl}/v1/transactions/submit-form`, {
       method: "POST",
       headers,
-      body: JSON.stringify(data),
+      body: JSON.stringify({
+        session: {
+          fingerprint: fingerprintVisitorId,
+          ...getDeviceData(),
+        },
+        ...data,
+      }),
     });
     expect(fetchFn).toHaveBeenCalledWith(`${apiUrl}/v1/operations/${operationId}`, {
       method: "POST",
@@ -301,7 +308,13 @@ describe(`function ${FinteqHubProcessing.prototype.submitForm.name} should work 
       expect(fetchFn).toHaveBeenCalledWith(`${apiUrl}/v1/transactions/submit-form`, {
         method: "POST",
         headers,
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          session: {
+            fingerprint: fingerprintVisitorId,
+            ...getDeviceData(),
+          },
+          ...data,
+        }),
       });
       expect(fetchFn).toHaveBeenCalledWith(`${apiUrl}/v1/operations/${operationId}`, {
         method: "POST",
