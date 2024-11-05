@@ -29,7 +29,7 @@ test(`function ${getDeviceType.name} should work correctly`, () => {
     },
   });
 
-  // expect(getDeviceType()).toEqual("computer");
+  expect(getDeviceType()).toEqual("computer");
 
   Object.defineProperty(window, "navigator", {
     value: {
@@ -69,12 +69,6 @@ test(`function ${getDeviceType.name} should work correctly`, () => {
 });
 
 test(`function ${getDeviceData.name} should work correctly`, () => {
-  Object.defineProperty(window, "navigator", {
-    value: {
-      userAgent:
-        "Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.0 Mobile/15E148 Safari/604.1",
-    },
-  });
   Object.defineProperty(window, "innerWidth", {
     value: 411,
   });
