@@ -16,15 +16,6 @@ test(`function ${getDeviceType.name} should work correctly`, () => {
   Object.defineProperty(window, "navigator", {
     value: {
       userAgent:
-        "Mozilla/5.0 (Linux; Android 11; SM-G991B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.181 Mobile Safari/537.36",
-    },
-  });
-
-  expect(getDeviceType()).toEqual("phone");
-
-  Object.defineProperty(window, "navigator", {
-    value: {
-      userAgent:
         "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.5938.62 Safari/537.36",
     },
   });
@@ -66,6 +57,15 @@ test(`function ${getDeviceType.name} should work correctly`, () => {
   });
 
   expect(getDeviceType()).toEqual("tablet");
+
+  Object.defineProperty(window, "navigator", {
+    value: {
+      userAgent:
+        "Mozilla/5.0 (Linux; Android 11; SM-G991B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.181 Mobile Safari/537.36",
+    },
+  });
+
+  expect(getDeviceType()).toEqual("phone");
 });
 
 test(`function ${getDeviceData.name} should work correctly`, () => {
