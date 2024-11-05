@@ -12,69 +12,61 @@ test(`function ${uuid.name} should work correctly`, () => {
   expect(uuid()).toEqual("60423029-0b76-4666-2666-666666666666");
 });
 
-test(`function ${getDeviceType.name} should work correctly`, () => {
-  Object.defineProperty(window, "navigator", {
-    value: {
-      userAgent:
-        "Mozilla/5.0 (Linux; Android 11; SM-G991B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.181 Mobile Safari/537.36",
-    },
+describe("getDeviceType", () => {
+  let userAgentSpy;
+
+  beforeEach(() => {
+    userAgentSpy = jest.spyOn(window.navigator, "userAgent", "get");
   });
 
-  expect(getDeviceType()).toEqual("phone");
-
-  Object.defineProperty(window, "navigator", {
-    value: {
-      userAgent:
-        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.5938.62 Safari/537.36",
-    },
+  afterEach(() => {
+    userAgentSpy.mockRestore();
   });
 
-  expect(getDeviceType()).toEqual("computer");
-
-  Object.defineProperty(window, "navigator", {
-    value: {
-      userAgent:
-        "Mozilla/5.0 (SmartTV; LG WebOS TV 4.0; 55UK6500MLA) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/68.0.3440.106 Safari/537.36 WebAppManager",
-    },
+  test("should detect wearable device", () => {
+    userAgentSpy.mockReturnValue(
+      "Mozilla/5.0 (Apple Watch; CPU WatchOS 7_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0 Mobile/15E148 Safari/604.1"
+    );
+    expect(getDeviceType()).toEqual("wearable");
   });
 
-  expect(getDeviceType()).toEqual("TV");
-
-  Object.defineProperty(window, "navigator", {
-    value: {
-      userAgent:
-        "Mozilla/5.0 (PlayStation; PlayStation 5/1.00) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.128 Safari/537.36",
-    },
+  test("should detect tablet device", () => {
+    userAgentSpy.mockReturnValue(
+      "Mozilla/5.0 (iPad; CPU OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko)"
+    );
+    expect(getDeviceType()).toEqual("tablet");
   });
 
-  expect(getDeviceType()).toEqual("console");
-
-  Object.defineProperty(window, "navigator", {
-    value: {
-      userAgent:
-        "Mozilla/5.0 (Apple Watch; CPU WatchOS 7_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0 Mobile/15E148 Safari/604.1",
-    },
+  test("should detect TV device", () => {
+    userAgentSpy.mockReturnValue(
+      "Mozilla/5.0 (SmartTV; LG WebOS TV 4.0; 55UK6500MLA) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/68.0.3440.106 Safari/537.36 WebAppManager"
+    );
+    expect(getDeviceType()).toEqual("TV");
   });
 
-  expect(getDeviceType()).toEqual("wearable");
-
-  Object.defineProperty(window, "navigator", {
-    value: {
-      userAgent:
-        "Mozilla/5.0 (iPad; CPU OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko)",
-    },
+  test("should detect console device", () => {
+    userAgentSpy.mockReturnValue(
+      "Mozilla/5.0 (PlayStation; PlayStation 5/1.00) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.128 Safari/537.36"
+    );
+    expect(getDeviceType()).toEqual("console");
   });
 
-  expect(getDeviceType()).toEqual("tablet");
+  test("should detect phone device", () => {
+    userAgentSpy.mockReturnValue(
+      "Mozilla/5.0 (Linux; Android 11; SM-G991B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.181 Mobile Safari/537.36"
+    );
+    expect(getDeviceType()).toEqual("phone");
+  });
+
+  test("should detect computer device", () => {
+    userAgentSpy.mockReturnValue(
+      "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.5938.62 Safari/537.36"
+    );
+    expect(getDeviceType()).toEqual("computer");
+  });
 });
 
 test(`function ${getDeviceData.name} should work correctly`, () => {
-  Object.defineProperty(window, "navigator", {
-    value: {
-      userAgent:
-        "Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.0 Mobile/15E148 Safari/604.1",
-    },
-  });
   Object.defineProperty(window, "innerWidth", {
     value: 411,
   });

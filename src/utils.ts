@@ -29,16 +29,8 @@ export function getDeviceType() {
     return DeviceType.Wearable;
   }
 
-  if (/mobile|android|iphone|ipod|blackberry|phone/i.test(userAgent)) {
-    return DeviceType.Phone;
-  }
-
   if (/ipad|tablet/i.test(userAgent)) {
     return DeviceType.Tablet;
-  }
-
-  if (/windows|mac os|x11|ubuntu|fedora|debian/i.test(userAgent)) {
-    return DeviceType.Computer;
   }
 
   if (
@@ -49,6 +41,14 @@ export function getDeviceType() {
 
   if (/xbox|playstation|nintendo|switch/i.test(userAgent)) {
     return DeviceType.Console;
+  }
+
+  if (/mobile|android|iphone|ipod|blackberry|phone/i.test(userAgent)) {
+    return DeviceType.Phone;
+  }
+
+  if (/windows|mac os|x11|ubuntu|fedora|debian/i.test(userAgent)) {
+    return DeviceType.Computer;
   }
 
   return DeviceType.Unknown;
