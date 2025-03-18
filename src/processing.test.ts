@@ -3,7 +3,7 @@ import "whatwg-fetch";
 import { FinteqHubProcessing } from "./processing";
 import { SubmitData } from "./typings";
 import { getDeviceData } from "./utils";
-import { TxType } from "./values";
+import { TxType } from "./consts";
 
 describe(`function ${FinteqHubProcessing.prototype.getSession.name} should work correctly`, () => {
   const apiUrl = "api-url";
