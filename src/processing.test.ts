@@ -3,6 +3,7 @@ import "whatwg-fetch";
 import { FinteqHubProcessing } from "./processing";
 import { SubmitData } from "./typings";
 import { getDeviceData } from "./utils";
+import { TxType } from "./values";
 
 describe(`function ${FinteqHubProcessing.prototype.getSession.name} should work correctly`, () => {
   const apiUrl = "api-url";
@@ -131,6 +132,7 @@ describe(`function ${FinteqHubProcessing.prototype.submitForm.name} should work 
       },
     },
     paymentMethod: "card-acquirer",
+    transactionType: TxType.Deposit,
   };
 
   const headers = {
