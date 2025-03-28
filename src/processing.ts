@@ -16,18 +16,22 @@ export class FinteqHubProcessing {
   private merchantId: string;
   private sessionId: string;
   private projectId: string;
+  private isSecure: boolean;
 
-  constructor(apiUrl: string, fingerprintVisitorId: string, merchantId: string, sessionId: string) {
+  constructor(apiUrl: string, fingerprintVisitorId: string, merchantId: string, sessionId: string, isSecure: boolean = false) {
     this.apiUrl = apiUrl;
     this.fingerprintVisitorId = fingerprintVisitorId;
     this.merchantId = merchantId;
     this.sessionId = sessionId;
+    this.isSecure = isSecure
   }
 
   public getSession() {
     return new Promise(async (resolve: ResolveSession, reject: Reject) => {
       try {
-        const response = await fetch(`${this.apiUrl}/v1/sessions/${this.sessionId}`, {
+        const url = this.isSecure ? `${this.apiUrl}/v1/secure/sessions/${this.sessionId}` : `${this.apiUrl}/v1/sessions/${this.sessionId}`;
+
+        const response = await fetch(url, {
           method: "GET",
           headers: {
             "Content-Type": "application/json;charset=UTF-8",
@@ -52,7 +56,8 @@ export class FinteqHubProcessing {
   public submitForm(data: SubmitData) {
     return new Promise(async (resolve: ResolveSubmitForm, reject: Reject) => {
       try {
-        const response = await this.sendPost(`${this.apiUrl}/v1/transactions/submit-form`, {
+        const url = this.isSecure ? `${this.apiUrl}/v1/secure/transactions/submit-form` : `${this.apiUrl}/v1/transactions/submit-form`;
+        const response = await this.sendPost(url, {
           session: {
             fingerprint: this.fingerprintVisitorId,
             ...getDeviceData(),
@@ -64,8 +69,9 @@ export class FinteqHubProcessing {
         if (result.error || response.status !== 200) {
           reject(new Error(result.error));
         } else {
+          const url = this.isSecure ? `${this.apiUrl}/v1/secure/operations/${result.operationId}` : `${this.apiUrl}/v1/operations/${result.operationId}`;
           this.processOperation(
-            `${this.apiUrl}/v1/operations/${result.operationId}`,
+            url,
             resolve,
             reject
           );
