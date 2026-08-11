@@ -814,4 +814,59 @@ describe("SDK header can be disabled", () => {
     const [, options] = fetchFn.mock.calls[0];
     expect(options.headers).not.toHaveProperty(SDK_HEADER_NAME);
   });
+
+  test(`submitForm omits ${SDK_HEADER_NAME} from both submit and polling requests when sendSdkHeader is false`, async () => {
+    const processing = new FinteqHubProcessing(apiUrl, fingerprintVisitorId, merchantId, sessionId, false, false);
+
+    const data: SubmitData = {
+      credentials: {
+        card: {
+          number: "1234567890123456",
+          holder: "Boris Britva",
+          expiryMonth: 10,
+          expiryYear: 2100,
+          cvv: "111",
+          tokenize: true,
+        },
+        billingAddress: {
+          address: "Ulica huulica",
+          city: "Moscow",
+          state: "US",
+          country: "US",
+          postalCode: "123456",
+        },
+        payer: {
+          merchantCustomerId: "john@doe.com",
+          firstName: "Boris Britva",
+          lastName: "10",
+          email: "kek@bek.com",
+          document: "document",
+          birthDate: "1996-10-03",
+          phoneNumber: "297776655",
+          phoneCountryCode: "+375",
+        },
+      },
+      paymentMethod: "card-acquirer",
+      transactionType: TxType.Deposit,
+    };
+
+    let count = 0;
+    const fetchFn = (window.fetch = jest.fn(() => {
+      count += 1;
+      return Promise.resolve({
+        status: 200,
+        json: () =>
+          count === 1
+            ? Promise.resolve({ operationId: "op-id" })
+            : Promise.resolve({ type: "redirect", redirectUrl: "redirect.url" }),
+      });
+    }) as jest.Mock);
+
+    await processing.submitForm(data);
+
+    expect(fetchFn).toHaveBeenCalledTimes(2);
+    for (const [, options] of fetchFn.mock.calls) {
+      expect(options.headers).not.toHaveProperty(SDK_HEADER_NAME);
+    }
+  });
 });

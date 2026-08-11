@@ -14,7 +14,7 @@ Every request the SDK makes carries an extra header:
 X-Finteqhub-SDK: sdk-js/<version>
 ```
 
-The value contains the SDK name and the version taken from `package.json` at build time (for example `sdk-js/0.11.0`). FinteqHub uses this header to identify traffic coming from the official SDK integration — for example to notify affected merchants when a security fix is released. It does not affect authentication or request routing.
+The value contains the SDK name and version (kept in sync with `package.json` by a test) — for example `sdk-js/0.11.0`. FinteqHub uses this header to identify traffic coming from the official SDK integration — for example to notify affected merchants when a security fix is released. It does not affect authentication or request routing.
 
 The header is sent by default. To opt out, pass `false` as the last constructor argument:
 
