@@ -1,6 +1,6 @@
 # processing-sdk
 
-Use `new FinteqHubProcessing(apiUrl: string, fingerprintVisitorId: string, merchantId: string, sessionId: string, isSecure?: boolean, sendSdkHeader?: boolean)` to create an instance of the FinteqHubProcessing object. The FinteqHubProcessing object is your entrypoint to FinteqHub processing SDK.
+Use `new FinteqHubProcessing(apiUrl: string, fingerprintVisitorId: string, merchantId: string, sessionId: string, isSecure?: boolean)` to create an instance of the FinteqHubProcessing object. The FinteqHubProcessing object is your entrypoint to FinteqHub processing SDK.
 
 ```
 const processing = new FinteqHubProcessing('api-url', 'fingerprint-visitor-id', 'merchant-id', 'session-id');
@@ -16,18 +16,7 @@ X-Finteqhub-SDK: sdk-js/<version>
 
 The value contains the SDK name and version (kept in sync with `package.json` by a test) — for example `sdk-js/0.11.0`. FinteqHub uses this header to identify traffic coming from the official SDK integration — for example to notify affected merchants when a security fix is released. It does not affect authentication or request routing.
 
-The header is sent by default. To opt out, pass `false` as the last constructor argument:
-
-```
-const processing = new FinteqHubProcessing(
-  'api-url',
-  'fingerprint-visitor-id',
-  'merchant-id',
-  'session-id',
-  false, // isSecure
-  false, // sendSdkHeader — set to false to skip the identification header
-);
-```
+The header is added automatically to every request and cannot be disabled.
 
 ## API
 
@@ -72,3 +61,7 @@ processing
   .then(result => console.log(result))
   .catch(error => console.warn(error));
 ```
+
+## Releasing
+
+On every version bump update **both** `package.json` `version` and `SDK_VERSION` in `src/version.ts` — they must stay in sync so the `X-Finteqhub-SDK` header reports the right version. `src/version.test.ts` fails CI if they drift.
