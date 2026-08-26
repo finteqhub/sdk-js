@@ -19,7 +19,7 @@ export class FinteqHubProcessing {
   private projectId: string;
   private isSecure: boolean;
 
-  constructor(apiUrl: string, fingerprintVisitorId: string, merchantId: string, sessionId: string, isSecure: boolean = false, sendSdkHeader: boolean = true) {
+  constructor(apiUrl: string, fingerprintVisitorId: string, merchantId: string, sessionId: string, isSecure: boolean = false) {
     this.apiUrl = apiUrl;
     this.fingerprintVisitorId = fingerprintVisitorId;
     this.merchantId = merchantId;
