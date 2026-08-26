@@ -4,6 +4,7 @@ import { FinteqHubProcessing } from "./processing";
 import { SubmitData } from "./typings";
 import { getDeviceData } from "./utils";
 import { TxType } from "./consts";
+import { SDK_HEADER_NAME, SDK_HEADER_VALUE } from "./version";
 
 describe(`function ${FinteqHubProcessing.prototype.getSession.name} should work correctly`, () => {
   const apiUrl = "api-url";
@@ -50,6 +51,7 @@ describe(`function ${FinteqHubProcessing.prototype.getSession.name} should work 
         "Content-Type": "application/json;charset=UTF-8",
         "x-merchant-id": merchantId,
         "x-request-id": expect.anything(),
+        [SDK_HEADER_NAME]: SDK_HEADER_VALUE,
       },
     });
   });
@@ -141,6 +143,7 @@ describe(`function ${FinteqHubProcessing.prototype.getSession.name} with secure 
         "Content-Type": "application/json;charset=UTF-8",
         "x-merchant-id": merchantId,
         "x-request-id": expect.anything(),
+        [SDK_HEADER_NAME]: SDK_HEADER_VALUE,
       },
     });
   });
@@ -232,6 +235,7 @@ describe(`function ${FinteqHubProcessing.prototype.submitForm.name} should work 
     "x-request-id": expect.anything(),
     "x-fingerprint": fingerprintVisitorId,
     "x-session-id": sessionId,
+    [SDK_HEADER_NAME]: SDK_HEADER_VALUE,
   };
   const redirectUrl = "redirect.url";
   const operationId = "operation.id";
@@ -529,6 +533,7 @@ describe(`function ${FinteqHubProcessing.prototype.submitForm.name} with secure 
     "x-request-id": expect.anything(),
     "x-fingerprint": fingerprintVisitorId,
     "x-session-id": sessionId,
+    [SDK_HEADER_NAME]: SDK_HEADER_VALUE,
   };
   const redirectUrl = "redirect.url";
   const operationId = "operation.id";

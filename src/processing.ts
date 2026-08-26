@@ -5,6 +5,7 @@ import {
   SubmitData,
 } from "./typings";
 import { getDeviceData, uuid } from "./utils";
+import { SDK_HEADER_NAME, SDK_HEADER_VALUE } from "./version";
 
 type ResolveSubmitForm = (result: ProcessOperationRedirectResponse) => void;
 type ResolveSession = (result: SessionResponse) => void;
@@ -23,7 +24,7 @@ export class FinteqHubProcessing {
     this.fingerprintVisitorId = fingerprintVisitorId;
     this.merchantId = merchantId;
     this.sessionId = sessionId;
-    this.isSecure = isSecure
+    this.isSecure = isSecure;
   }
 
   public getSession() {
@@ -37,6 +38,7 @@ export class FinteqHubProcessing {
             "Content-Type": "application/json;charset=UTF-8",
             "x-merchant-id": this.merchantId,
             "x-request-id": uuid(),
+            [SDK_HEADER_NAME]: SDK_HEADER_VALUE,
           },
         });
         const result = await response.json();
@@ -130,6 +132,7 @@ export class FinteqHubProcessing {
         "x-fingerprint": this.fingerprintVisitorId,
         "x-session-id": this.sessionId,
         "x-project-id": this.projectId,
+        [SDK_HEADER_NAME]: SDK_HEADER_VALUE,
       },
       body: JSON.stringify(data),
     });
