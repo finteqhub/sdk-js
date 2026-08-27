@@ -1,4 +1,4 @@
-import { uuid, getDeviceType, getDeviceData } from "./utils";
+import { uuid, getDeviceType, getDeviceData, getClientHints } from "./utils";
 
 test(`function ${uuid.name} should work correctly`, () => {
   Date.now = jest.fn(() => 1487076708000);
@@ -66,12 +66,17 @@ describe("getDeviceType", () => {
   });
 });
 
-test(`function ${getDeviceData.name} should work correctly`, () => {
+test(`function ${getDeviceData.name} should work correctly`, async () => {
   Object.defineProperty(window, "innerWidth", {
     value: 411,
   });
   Object.defineProperty(navigator, "userAgentData", {
-    value: { platform: "mock-platform" },
+    value: {
+      platform: "mock-platform",
+      mobile: true,
+      brands: [{ brand: "Chromium", version: "130" }],
+      getHighEntropyValues: () => Promise.resolve({ model: "SM-G991B", platformVersion: "13.0.0" }),
+    },
     configurable: true,
   });
 
@@ -120,7 +125,7 @@ test(`function ${getDeviceData.name} should work correctly`, () => {
 
   jest.spyOn(Date.prototype, "getTimezoneOffset").mockReturnValue(-120);
 
-  expect(getDeviceData()).toEqual({
+  expect(await getDeviceData()).toEqual({
     device: {
       type: "phone",
       browser: {
@@ -128,6 +133,13 @@ test(`function ${getDeviceData.name} should work correctly`, () => {
         acceptHeader: "application/json",
         userAgent:
           "Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.0 Mobile/15E148 Safari/604.1",
+        clientHints: {
+          "Sec-CH-UA": '"Chromium";v="130"',
+          "Sec-CH-UA-Mobile": "?1",
+          "Sec-CH-UA-Model": "SM-G991B",
+          "Sec-CH-UA-Platform": "mock-platform",
+          "Sec-CH-UA-Platform-Version": "13.0.0",
+        },
         javaEnabled: false,
         javaScriptEnabled: true,
         language: "en-Mock",
@@ -142,5 +154,76 @@ test(`function ${getDeviceData.name} should work correctly`, () => {
         timeZoneName: expect.anything(),
       },
     },
+  });
+});
+
+describe("getClientHints", () => {
+  const mockUserAgentData = (value: unknown) =>
+    Object.defineProperty(navigator, "userAgentData", { value, configurable: true });
+
+  test("returns every hint the browser exposes, keyed by header name", async () => {
+    mockUserAgentData({
+      brands: [{ brand: "Not?A_Brand", version: "99" }],
+      mobile: false,
+      platform: "Android",
+      getHighEntropyValues: () =>
+        Promise.resolve({
+          architecture: "arm",
+          bitness: "64",
+          formFactors: ["Mobile"],
+          fullVersionList: [
+            { brand: "Chromium", version: "130.0.0.0" },
+            { brand: "Not?A_Brand", version: "99.0.0.0" },
+          ],
+          model: "Pixel 3 XL",
+          platformVersion: "13.0.0",
+          uaFullVersion: "130.0.6723.58",
+          wow64: false,
+        }),
+    });
+
+    expect(await getClientHints()).toEqual({
+      "Sec-CH-UA": '"Not?A_Brand";v="99"',
+      "Sec-CH-UA-Arch": "arm",
+      "Sec-CH-UA-Bitness": "64",
+      "Sec-CH-UA-Form-Factors": '"Mobile"',
+      "Sec-CH-UA-Full-Version": "130.0.6723.58",
+      "Sec-CH-UA-Full-Version-List": '"Chromium";v="130.0.0.0", "Not?A_Brand";v="99.0.0.0"',
+      "Sec-CH-UA-Mobile": "?0",
+      "Sec-CH-UA-Model": "Pixel 3 XL",
+      "Sec-CH-UA-Platform": "Android",
+      "Sec-CH-UA-Platform-Version": "13.0.0",
+      "Sec-CH-UA-WoW64": "?0",
+    });
+  });
+
+  test("falls back to low entropy hints when high entropy values are denied", async () => {
+    mockUserAgentData({
+      brands: [{ brand: "Chromium", version: "130" }],
+      mobile: true,
+      platform: "Android",
+      getHighEntropyValues: () => Promise.reject(new Error("NotAllowedError")),
+    });
+
+    expect(await getClientHints()).toEqual({
+      "Sec-CH-UA": '"Chromium";v="130"',
+      "Sec-CH-UA-Mobile": "?1",
+      "Sec-CH-UA-Platform": "Android",
+    });
+  });
+
+  test("returns nothing on browsers without the client hints API", async () => {
+    mockUserAgentData(undefined);
+
+    expect(await getClientHints()).toEqual({});
+  });
+
+  test("omits hints the browser does not expose", async () => {
+    mockUserAgentData({
+      platform: "macOS",
+      getHighEntropyValues: () => Promise.resolve({ model: "" }),
+    });
+
+    expect(await getClientHints()).toEqual({ "Sec-CH-UA-Platform": "macOS" });
   });
 });

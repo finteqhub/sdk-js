@@ -274,7 +274,7 @@ describe(`function ${FinteqHubProcessing.prototype.submitForm.name} should work 
       body: JSON.stringify({
         session: {
           fingerprint: fingerprintVisitorId,
-          ...getDeviceData(),
+          ...(await getDeviceData()),
         },
         ...data,
       }),
@@ -396,7 +396,7 @@ describe(`function ${FinteqHubProcessing.prototype.submitForm.name} should work 
 
     const promise = processing.submitForm(data).then((res) => expect(res).toEqual(resolve));
 
-    setTimeout(() => {
+    setTimeout(async () => {
       expect(iframeMock.src).toEqual(formUrl);
 
       iframeMock.onload();
@@ -408,7 +408,7 @@ describe(`function ${FinteqHubProcessing.prototype.submitForm.name} should work 
         body: JSON.stringify({
           session: {
             fingerprint: fingerprintVisitorId,
-            ...getDeviceData(),
+            ...(await getDeviceData()),
           },
           ...data,
         }),
@@ -572,7 +572,7 @@ describe(`function ${FinteqHubProcessing.prototype.submitForm.name} with secure 
       body: JSON.stringify({
         session: {
           fingerprint: fingerprintVisitorId,
-          ...getDeviceData(),
+          ...(await getDeviceData()),
         },
         ...data,
       }),
@@ -694,7 +694,7 @@ describe(`function ${FinteqHubProcessing.prototype.submitForm.name} with secure 
 
     const promise = processing.submitForm(data).then((res) => expect(res).toEqual(resolve));
 
-    setTimeout(() => {
+    setTimeout(async () => {
       expect(iframeMock.src).toEqual(formUrl);
 
       iframeMock.onload();
@@ -706,7 +706,7 @@ describe(`function ${FinteqHubProcessing.prototype.submitForm.name} with secure 
         body: JSON.stringify({
           session: {
             fingerprint: fingerprintVisitorId,
-            ...getDeviceData(),
+            ...(await getDeviceData()),
           },
           ...data,
         }),

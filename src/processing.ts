@@ -62,7 +62,7 @@ export class FinteqHubProcessing {
         const response = await this.sendPost(url, {
           session: {
             fingerprint: this.fingerprintVisitorId,
-            ...getDeviceData(),
+            ...(await getDeviceData()),
           },
           ...data,
         });
