@@ -834,6 +834,50 @@ describe(`retry and error diagnostics should work correctly`, () => {
     expect(warnSpy).toHaveBeenCalledTimes(1);
   });
 
+  test(`retries when reading the response body fails and succeeds on the next attempt`, async () => {
+    let count = 0;
+    const fetchFn = (window.fetch = jest.fn(() => {
+      count += 1;
+      return count === 1
+        ? Promise.resolve({ status: 200, text: () => Promise.reject(new TypeError("network error")) })
+        : Promise.resolve({ status: 200, text: () => Promise.resolve(JSON.stringify(session)) });
+    }) as jest.Mock);
+
+    const processing = new FinteqHubProcessing({ apiUrl, fingerprintVisitorId, merchantId, sessionId });
+    const res = await processing.getSession();
+
+    expect(res).toEqual(session);
+    expect(fetchFn).toHaveBeenCalledTimes(2);
+    expect(warnSpy).toHaveBeenCalledTimes(1);
+  });
+
+  test(`rejects with network diagnostics when reading the response body keeps failing`, async () => {
+    const fetchFn = (window.fetch = jest.fn(() =>
+      Promise.resolve({ status: 200, text: () => Promise.reject(new TypeError("network error")) })
+    ) as jest.Mock);
+
+    const processing = new FinteqHubProcessing({ apiUrl, fingerprintVisitorId, merchantId, sessionId, retryOptions: { retryCount: 1 } });
+
+    await expect(processing.getSession()).rejects.toMatchObject({
+      name: "RequestError",
+      message: expect.stringContaining("network error"),
+      diagnostics: {
+        kind: "network",
+        error: expect.objectContaining({ name: "TypeError", message: "network error" }),
+        request: expect.objectContaining({
+          attempts: [
+            expect.objectContaining({ error: "network error", durationMs: expect.any(Number) }),
+            expect.objectContaining({ error: "network error", durationMs: expect.any(Number) }),
+          ],
+        }),
+      },
+    });
+
+    expect(fetchFn).toHaveBeenCalledTimes(2);
+    expect(warnSpy).toHaveBeenCalledTimes(1);
+    expect(errorSpy).toHaveBeenCalledTimes(1);
+  });
+
   test(`rejects with diagnostics and logs console.error when network retries are exhausted`, async () => {
     const fetchFn = (window.fetch = jest.fn(() => Promise.reject(new TypeError("Failed to fetch"))) as jest.Mock);
 

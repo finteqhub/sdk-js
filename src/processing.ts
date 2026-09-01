@@ -239,8 +239,7 @@ export class FinteqHubProcessing {
   }
 
   private async request(url: string, options: RequestOptions) {
-    const { response, attempts } = await this.fetchWithRetry(url, options);
-    const text = await response.text();
+    const { response, text, attempts } = await this.fetchWithRetry(url, options);
     const body = response.status !== 200 ? sanitizeBody(text) : undefined;
 
     let result;
@@ -265,23 +264,22 @@ export class FinteqHubProcessing {
     return result;
   }
 
-  private async fetchWithRetry(url: string, options: RequestOptions): Promise<{ response: Response; attempts: RequestAttempt[] }> {
+  private async fetchWithRetry(url: string, options: RequestOptions): Promise<{ response: Response; text: string; attempts: RequestAttempt[] }> {
     const retryCount = this.retryOptions.retryCount ?? DEFAULT_RETRY_COUNT;
     const retryStatusCode = this.retryOptions.retryStatusCode ?? defaultRetryStatusCode;
     const attempts: RequestAttempt[] = [];
 
     for (let attempt = 1; ; attempt += 1) {
       let reason: string;
+      let result: { response: Response; text: string } | undefined;
       const startedAt = Date.now();
 
       try {
         const response = await fetch(url, options);
+        // the connection can also drop while the body is being read — that is a network failure too
+        const text = await response.text();
+        result = { response, text };
         attempts.push({ durationMs: Date.now() - startedAt, status: response.status });
-
-        if (!retryStatusCode(response.status) || attempt > retryCount) {
-          return { response, attempts };
-        }
-        reason = `status code ${response.status}`;
       } catch (e) {
         attempts.push({ durationMs: Date.now() - startedAt, error: e.message });
 
@@ -291,6 +289,15 @@ export class FinteqHubProcessing {
           throw new RequestError(`request to ${url} failed after ${attempt} attempt(s): ${e.message}`, diagnostics);
         }
         reason = e.message;
+      }
+
+      // retryStatusCode is user code — called outside the try so its errors are not
+      // recorded as a network failure of the attempt
+      if (result) {
+        if (!retryStatusCode(result.response.status) || attempt > retryCount) {
+          return { ...result, attempts };
+        }
+        reason = `status code ${result.response.status}`;
       }
 
       const delay = RETRY_DELAYS_MS[Math.min(attempt - 1, RETRY_DELAYS_MS.length - 1)];
