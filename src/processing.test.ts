@@ -1,10 +1,23 @@
 import "whatwg-fetch";
 
-import { FinteqHubProcessing } from "./processing";
+import { FinteqHubProcessing, RequestError } from "./processing";
 import { SubmitData } from "./typings";
 import { getDeviceData } from "./utils";
 import { TxType } from "./consts";
-import { SDK_HEADER_NAME, SDK_HEADER_VALUE } from "./version";
+import { SDK_HEADER_NAME, SDK_HEADER_VALUE, SDK_VERSION } from "./version";
+
+let warnSpy: jest.SpyInstance;
+let errorSpy: jest.SpyInstance;
+
+beforeEach(() => {
+  warnSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
+  errorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+});
+
+afterEach(() => {
+  warnSpy.mockRestore();
+  errorSpy.mockRestore();
+});
 
 describe(`function ${FinteqHubProcessing.prototype.getSession.name} should work correctly`, () => {
   const apiUrl = "api-url";
@@ -12,7 +25,7 @@ describe(`function ${FinteqHubProcessing.prototype.getSession.name} should work 
   const merchantId = "merchant-id";
   const sessionId = "session-id";
 
-  const processing = new FinteqHubProcessing(apiUrl, fingerprintVisitorId, merchantId, sessionId);
+  const processing = new FinteqHubProcessing({ apiUrl, fingerprintVisitorId, merchantId, sessionId });
 
   const session = {
     operation: {
@@ -38,7 +51,7 @@ describe(`function ${FinteqHubProcessing.prototype.getSession.name} should work 
     const fetchFn = (window.fetch = jest.fn(() => {
       return Promise.resolve({
         status: 200,
-        json: () => Promise.resolve(session),
+        text: () => Promise.resolve(JSON.stringify(session)),
       });
     }) as jest.Mock);
 
@@ -60,10 +73,7 @@ describe(`function ${FinteqHubProcessing.prototype.getSession.name} should work 
     const fetchFn = (window.fetch = jest.fn(() =>
       Promise.resolve({
         status: 200,
-        json: () =>
-          Promise.resolve({
-            error,
-          }),
+        text: () => Promise.resolve(JSON.stringify({ error })),
       })
     ) as jest.Mock);
 
@@ -79,11 +89,8 @@ describe(`function ${FinteqHubProcessing.prototype.getSession.name} should work 
   test(`status is not 200 on session request`, async () => {
     const fetchFn = (window.fetch = jest.fn(() =>
       Promise.resolve({
-        status: 400,
-        json: () =>
-          Promise.resolve({
-            error,
-          }),
+        status: 404,
+        text: () => Promise.resolve(JSON.stringify({ error })),
       })
     ) as jest.Mock);
 
@@ -104,7 +111,7 @@ describe(`function ${FinteqHubProcessing.prototype.getSession.name} with secure 
   const sessionId = "session-id";
   const isSecure = true;
 
-  const processing = new FinteqHubProcessing(apiUrl, fingerprintVisitorId, merchantId, sessionId, isSecure);
+  const processing = new FinteqHubProcessing({ apiUrl, fingerprintVisitorId, merchantId, sessionId, isSecure });
 
   const session = {
     operation: {
@@ -130,7 +137,7 @@ describe(`function ${FinteqHubProcessing.prototype.getSession.name} with secure 
     const fetchFn = (window.fetch = jest.fn(() => {
       return Promise.resolve({
         status: 200,
-        json: () => Promise.resolve(session),
+        text: () => Promise.resolve(JSON.stringify(session)),
       });
     }) as jest.Mock);
 
@@ -152,10 +159,7 @@ describe(`function ${FinteqHubProcessing.prototype.getSession.name} with secure 
     const fetchFn = (window.fetch = jest.fn(() =>
       Promise.resolve({
         status: 200,
-        json: () =>
-          Promise.resolve({
-            error,
-          }),
+        text: () => Promise.resolve(JSON.stringify({ error })),
       })
     ) as jest.Mock);
 
@@ -171,11 +175,8 @@ describe(`function ${FinteqHubProcessing.prototype.getSession.name} with secure 
   test(`status is not 200 on session request`, async () => {
     const fetchFn = (window.fetch = jest.fn(() =>
       Promise.resolve({
-        status: 400,
-        json: () =>
-          Promise.resolve({
-            error,
-          }),
+        status: 404,
+        text: () => Promise.resolve(JSON.stringify({ error })),
       })
     ) as jest.Mock);
 
@@ -195,7 +196,7 @@ describe(`function ${FinteqHubProcessing.prototype.submitForm.name} should work 
   const merchantId = "merchant-id";
   const sessionId = "session-id";
 
-  const processing = new FinteqHubProcessing(apiUrl, fingerprintVisitorId, merchantId, sessionId);
+  const processing = new FinteqHubProcessing({ apiUrl, fingerprintVisitorId, merchantId, sessionId });
 
   const data: SubmitData = {
     credentials: {
@@ -252,15 +253,7 @@ describe(`function ${FinteqHubProcessing.prototype.submitForm.name} should work 
       count += 1;
       return Promise.resolve({
         status: 200,
-        json: () => {
-          if (count === 1) {
-            return Promise.resolve({
-              operationId,
-            });
-          } else {
-            return Promise.resolve(resolve);
-          }
-        },
+        text: () => Promise.resolve(JSON.stringify(count === 1 ? { operationId } : resolve)),
       });
     }) as jest.Mock);
 
@@ -297,18 +290,13 @@ describe(`function ${FinteqHubProcessing.prototype.submitForm.name} should work 
       count += 1;
       return Promise.resolve({
         status: 200,
-        json: () => {
+        text: () => {
           if (count === 1) {
-            return Promise.resolve({
-              operationId,
-            });
+            return Promise.resolve(JSON.stringify({ operationId }));
           } else if (count === 2) {
-            return Promise.resolve({
-              type: "wait",
-              waitInterval: 0.1,
-            });
+            return Promise.resolve(JSON.stringify({ type: "wait", waitInterval: 0.1 }));
           } else {
-            return Promise.resolve(resolve);
+            return Promise.resolve(JSON.stringify(resolve));
           }
         },
       });
@@ -323,10 +311,7 @@ describe(`function ${FinteqHubProcessing.prototype.submitForm.name} should work 
     const fetchFn = (window.fetch = jest.fn(() =>
       Promise.resolve({
         status: 200,
-        json: () =>
-          Promise.resolve({
-            error,
-          }),
+        text: () => Promise.resolve(JSON.stringify({ error })),
       })
     ) as jest.Mock);
 
@@ -342,11 +327,8 @@ describe(`function ${FinteqHubProcessing.prototype.submitForm.name} should work 
   test(`status is not 200 on submit request`, async () => {
     const fetchFn = (window.fetch = jest.fn(() =>
       Promise.resolve({
-        status: 400,
-        json: () =>
-          Promise.resolve({
-            error,
-          }),
+        status: 404,
+        text: () => Promise.resolve(JSON.stringify({ error })),
       })
     ) as jest.Mock);
 
@@ -371,18 +353,13 @@ describe(`function ${FinteqHubProcessing.prototype.submitForm.name} should work 
       count += 1;
       return Promise.resolve({
         status: 200,
-        json: () => {
+        text: () => {
           if (count === 1) {
-            return Promise.resolve({
-              operationId,
-            });
+            return Promise.resolve(JSON.stringify({ operationId }));
           } else if (count === 2) {
-            return Promise.resolve({
-              type: "submitForm",
-              formUrl,
-            });
+            return Promise.resolve(JSON.stringify({ type: "submitForm", formUrl }));
           } else if (count === 3) {
-            return Promise.resolve(resolve);
+            return Promise.resolve(JSON.stringify(resolve));
           }
         },
       });
@@ -430,16 +407,11 @@ describe(`function ${FinteqHubProcessing.prototype.submitForm.name} should work 
       count += 1;
       return Promise.resolve({
         status: 200,
-        json: () => {
+        text: () => {
           if (count === 1) {
-            return Promise.resolve({
-              operationId,
-            });
+            return Promise.resolve(JSON.stringify({ operationId }));
           } else {
-            return Promise.resolve({
-              type: "unknown",
-              redirectUrl,
-            });
+            return Promise.resolve(JSON.stringify({ type: "unknown", redirectUrl }));
           }
         },
       });
@@ -462,17 +434,11 @@ describe(`function ${FinteqHubProcessing.prototype.submitForm.name} should work 
       return count === 1
         ? Promise.resolve({
             status: 200,
-            json: () =>
-              Promise.resolve({
-                operationId,
-              }),
+            text: () => Promise.resolve(JSON.stringify({ operationId })),
           })
         : Promise.resolve({
-            status: 400,
-            json: () =>
-              Promise.resolve({
-                error,
-              }),
+            status: 404,
+            text: () => Promise.resolve(JSON.stringify({ error })),
           });
     }) as jest.Mock);
 
@@ -493,7 +459,7 @@ describe(`function ${FinteqHubProcessing.prototype.submitForm.name} with secure 
   const sessionId = "session-id";
   const isSecure = true;
 
-  const processing = new FinteqHubProcessing(apiUrl, fingerprintVisitorId, merchantId, sessionId, isSecure);
+  const processing = new FinteqHubProcessing({ apiUrl, fingerprintVisitorId, merchantId, sessionId, isSecure });
 
   const data: SubmitData = {
     credentials: {
@@ -550,15 +516,7 @@ describe(`function ${FinteqHubProcessing.prototype.submitForm.name} with secure 
       count += 1;
       return Promise.resolve({
         status: 200,
-        json: () => {
-          if (count === 1) {
-            return Promise.resolve({
-              operationId,
-            });
-          } else {
-            return Promise.resolve(resolve);
-          }
-        },
+        text: () => Promise.resolve(JSON.stringify(count === 1 ? { operationId } : resolve)),
       });
     }) as jest.Mock);
 
@@ -595,18 +553,13 @@ describe(`function ${FinteqHubProcessing.prototype.submitForm.name} with secure 
       count += 1;
       return Promise.resolve({
         status: 200,
-        json: () => {
+        text: () => {
           if (count === 1) {
-            return Promise.resolve({
-              operationId,
-            });
+            return Promise.resolve(JSON.stringify({ operationId }));
           } else if (count === 2) {
-            return Promise.resolve({
-              type: "wait",
-              waitInterval: 0.1,
-            });
+            return Promise.resolve(JSON.stringify({ type: "wait", waitInterval: 0.1 }));
           } else {
-            return Promise.resolve(resolve);
+            return Promise.resolve(JSON.stringify(resolve));
           }
         },
       });
@@ -621,10 +574,7 @@ describe(`function ${FinteqHubProcessing.prototype.submitForm.name} with secure 
     const fetchFn = (window.fetch = jest.fn(() =>
       Promise.resolve({
         status: 200,
-        json: () =>
-          Promise.resolve({
-            error,
-          }),
+        text: () => Promise.resolve(JSON.stringify({ error })),
       })
     ) as jest.Mock);
 
@@ -640,11 +590,8 @@ describe(`function ${FinteqHubProcessing.prototype.submitForm.name} with secure 
   test(`status is not 200 on submit request`, async () => {
     const fetchFn = (window.fetch = jest.fn(() =>
       Promise.resolve({
-        status: 400,
-        json: () =>
-          Promise.resolve({
-            error,
-          }),
+        status: 404,
+        text: () => Promise.resolve(JSON.stringify({ error })),
       })
     ) as jest.Mock);
 
@@ -669,18 +616,13 @@ describe(`function ${FinteqHubProcessing.prototype.submitForm.name} with secure 
       count += 1;
       return Promise.resolve({
         status: 200,
-        json: () => {
+        text: () => {
           if (count === 1) {
-            return Promise.resolve({
-              operationId,
-            });
+            return Promise.resolve(JSON.stringify({ operationId }));
           } else if (count === 2) {
-            return Promise.resolve({
-              type: "submitForm",
-              formUrl,
-            });
+            return Promise.resolve(JSON.stringify({ type: "submitForm", formUrl }));
           } else if (count === 3) {
-            return Promise.resolve(resolve);
+            return Promise.resolve(JSON.stringify(resolve));
           }
         },
       });
@@ -728,16 +670,11 @@ describe(`function ${FinteqHubProcessing.prototype.submitForm.name} with secure 
       count += 1;
       return Promise.resolve({
         status: 200,
-        json: () => {
+        text: () => {
           if (count === 1) {
-            return Promise.resolve({
-              operationId,
-            });
+            return Promise.resolve(JSON.stringify({ operationId }));
           } else {
-            return Promise.resolve({
-              type: "unknown",
-              redirectUrl,
-            });
+            return Promise.resolve(JSON.stringify({ type: "unknown", redirectUrl }));
           }
         },
       });
@@ -760,17 +697,11 @@ describe(`function ${FinteqHubProcessing.prototype.submitForm.name} with secure 
       return count === 1
         ? Promise.resolve({
             status: 200,
-            json: () =>
-              Promise.resolve({
-                operationId,
-              }),
+            text: () => Promise.resolve(JSON.stringify({ operationId })),
           })
         : Promise.resolve({
-            status: 400,
-            json: () =>
-              Promise.resolve({
-                error,
-              }),
+            status: 404,
+            text: () => Promise.resolve(JSON.stringify({ error })),
           });
     }) as jest.Mock);
 
@@ -781,5 +712,295 @@ describe(`function ${FinteqHubProcessing.prototype.submitForm.name} with secure 
     }
 
     expect(fetchFn).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe(`retry and error diagnostics should work correctly`, () => {
+  const apiUrl = "api-url";
+  const fingerprintVisitorId = "fingerprint-visitor-id";
+  const merchantId = "merchant-id";
+  const sessionId = "session-id";
+
+  const session = {
+    operation: {
+      projectId: "0184769d-7360-af60-2150-dbe075a00b14",
+    },
+  };
+
+  test(`retries retryable status codes until success and warns on every attempt`, async () => {
+    let count = 0;
+    const fetchFn = (window.fetch = jest.fn(() => {
+      count += 1;
+      return count < 3
+        ? Promise.resolve({ status: 500, text: () => Promise.resolve(JSON.stringify({ error: "server error" })) })
+        : Promise.resolve({ status: 200, text: () => Promise.resolve(JSON.stringify(session)) });
+    }) as jest.Mock);
+
+    const processing = new FinteqHubProcessing({ apiUrl, fingerprintVisitorId, merchantId, sessionId });
+    const res = await processing.getSession();
+
+    expect(res).toEqual(session);
+    expect(fetchFn).toHaveBeenCalledTimes(3);
+    expect(warnSpy).toHaveBeenCalledTimes(2);
+  });
+
+  test(`does not retry non-retryable status codes`, async () => {
+    const fetchFn = (window.fetch = jest.fn(() =>
+      Promise.resolve({ status: 404, text: () => Promise.resolve(JSON.stringify({ error: "not found" })) })
+    ) as jest.Mock);
+
+    const processing = new FinteqHubProcessing({ apiUrl, fingerprintVisitorId, merchantId, sessionId });
+    await expect(processing.getSession()).rejects.toMatchObject({
+      name: "RequestError",
+      message: "not found",
+      diagnostics: {
+        kind: "http_error",
+        sdkVersion: SDK_VERSION,
+        response: { status: 404, body: JSON.stringify({ error: "not found" }) },
+        request: expect.objectContaining({
+          attempts: [expect.objectContaining({ status: 404, durationMs: expect.any(Number) })],
+        }),
+      },
+    });
+
+    expect(fetchFn).toHaveBeenCalledTimes(1);
+    expect(warnSpy).not.toHaveBeenCalled();
+    expect(errorSpy).toHaveBeenCalledTimes(1);
+  });
+
+  test(`stops retrying after retryCount and rejects with response error`, async () => {
+    const fetchFn = (window.fetch = jest.fn(() =>
+      Promise.resolve({ status: 500, text: () => Promise.resolve(JSON.stringify({ error: "server error" })) })
+    ) as jest.Mock);
+
+    const processing = new FinteqHubProcessing({ apiUrl, fingerprintVisitorId, merchantId, sessionId, retryOptions: { retryCount: 2 } });
+    await expect(processing.getSession()).rejects.toMatchObject({
+      name: "RequestError",
+      message: "server error",
+      diagnostics: {
+        kind: "http_error",
+        response: { status: 500, body: JSON.stringify({ error: "server error" }) },
+        request: expect.objectContaining({
+          attempts: [
+            expect.objectContaining({ status: 500 }),
+            expect.objectContaining({ status: 500 }),
+            expect.objectContaining({ status: 500 }),
+          ],
+        }),
+      },
+    });
+
+    expect(fetchFn).toHaveBeenCalledTimes(3);
+    expect(warnSpy).toHaveBeenCalledTimes(2);
+  });
+
+  test(`custom retryStatusCode is used instead of the default`, async () => {
+    let count = 0;
+    const fetchFn = (window.fetch = jest.fn(() => {
+      count += 1;
+      return count === 1
+        ? Promise.resolve({ status: 404, text: () => Promise.resolve(JSON.stringify({ error: "not found" })) })
+        : Promise.resolve({ status: 200, text: () => Promise.resolve(JSON.stringify(session)) });
+    }) as jest.Mock);
+
+    const processing = new FinteqHubProcessing({
+      apiUrl,
+      fingerprintVisitorId,
+      merchantId,
+      sessionId,
+      retryOptions: { retryStatusCode: (statusCode) => statusCode === 404 },
+    });
+    const res = await processing.getSession();
+
+    expect(res).toEqual(session);
+    expect(fetchFn).toHaveBeenCalledTimes(2);
+    expect(warnSpy).toHaveBeenCalledTimes(1);
+  });
+
+  test(`retries network errors until success`, async () => {
+    let count = 0;
+    const fetchFn = (window.fetch = jest.fn(() => {
+      count += 1;
+      return count === 1
+        ? Promise.reject(new TypeError("Failed to fetch"))
+        : Promise.resolve({ status: 200, text: () => Promise.resolve(JSON.stringify(session)) });
+    }) as jest.Mock);
+
+    const processing = new FinteqHubProcessing({ apiUrl, fingerprintVisitorId, merchantId, sessionId });
+    const res = await processing.getSession();
+
+    expect(res).toEqual(session);
+    expect(fetchFn).toHaveBeenCalledTimes(2);
+    expect(warnSpy).toHaveBeenCalledTimes(1);
+  });
+
+  test(`rejects with diagnostics and logs console.error when network retries are exhausted`, async () => {
+    const fetchFn = (window.fetch = jest.fn(() => Promise.reject(new TypeError("Failed to fetch"))) as jest.Mock);
+
+    const processing = new FinteqHubProcessing({ apiUrl, fingerprintVisitorId, merchantId, sessionId, retryOptions: { retryCount: 1 } });
+
+    await expect(processing.getSession()).rejects.toMatchObject({
+      name: "RequestError",
+      message: expect.stringContaining("Failed to fetch"),
+      diagnostics: {
+        kind: "network",
+        sdkVersion: SDK_VERSION,
+        error: expect.objectContaining({
+          name: "TypeError",
+          message: "Failed to fetch",
+        }),
+        request: {
+          url: `${apiUrl}/v1/sessions/${sessionId}`,
+          method: "GET",
+          requestId: expect.any(String),
+          sessionId,
+          attempts: [
+            expect.objectContaining({ error: "Failed to fetch", durationMs: expect.any(Number) }),
+            expect.objectContaining({ error: "Failed to fetch", durationMs: expect.any(Number) }),
+          ],
+        },
+        environment: expect.objectContaining({
+          visibility: "visible",
+          timestamp: expect.any(String),
+        }),
+      },
+    });
+
+    expect(fetchFn).toHaveBeenCalledTimes(2);
+    expect(warnSpy).toHaveBeenCalledTimes(1);
+    expect(errorSpy).toHaveBeenCalledTimes(1);
+    expect(errorSpy.mock.calls[0][1]).toEqual(expect.objectContaining({ error: expect.anything() }));
+  });
+
+  test(`logs console.error with diagnostics even when retries are disabled`, async () => {
+    const fetchFn = (window.fetch = jest.fn(() => Promise.reject(new TypeError("Failed to fetch"))) as jest.Mock);
+
+    const processing = new FinteqHubProcessing({ apiUrl, fingerprintVisitorId, merchantId, sessionId, retryOptions: { retryCount: 0 } });
+
+    await expect(processing.getSession()).rejects.toBeInstanceOf(RequestError);
+
+    expect(fetchFn).toHaveBeenCalledTimes(1);
+    expect(warnSpy).not.toHaveBeenCalled();
+    expect(errorSpy).toHaveBeenCalledTimes(1);
+  });
+
+  test(`submitForm rejects with diagnostics when network retries are exhausted`, async () => {
+    const fetchFn = (window.fetch = jest.fn(() => Promise.reject(new TypeError("Failed to fetch"))) as jest.Mock);
+
+    const processing = new FinteqHubProcessing({ apiUrl, fingerprintVisitorId, merchantId, sessionId, retryOptions: { retryCount: 0 } });
+
+    await expect(processing.submitForm({} as SubmitData)).rejects.toMatchObject({
+      name: "RequestError",
+      diagnostics: expect.objectContaining({
+        request: expect.objectContaining({
+          url: `${apiUrl}/v1/transactions/submit-form`,
+          method: "POST",
+          sessionId,
+          attempts: [expect.objectContaining({ error: "Failed to fetch" })],
+        }),
+      }),
+    });
+
+    expect(fetchFn).toHaveBeenCalledTimes(1);
+    expect(errorSpy).toHaveBeenCalledTimes(1);
+  });
+
+  test(`rejects with diagnostics and a masked body snippet when the response is not valid JSON`, async () => {
+    window.fetch = jest.fn(() =>
+      Promise.resolve({ status: 502, text: () => Promise.resolve("<html>502 Bad Gateway, ray 1234567890</html>") })
+    ) as jest.Mock;
+
+    const processing = new FinteqHubProcessing({ apiUrl, fingerprintVisitorId, merchantId, sessionId, retryOptions: { retryCount: 0 } });
+
+    await expect(processing.getSession()).rejects.toMatchObject({
+      name: "RequestError",
+      message: expect.stringContaining("invalid JSON"),
+      diagnostics: {
+        kind: "invalid_json",
+        error: expect.objectContaining({ name: "SyntaxError" }),
+        response: { status: 502, body: "<html>502 Bad Gateway, ray ***</html>" },
+      },
+    });
+
+    expect(errorSpy).toHaveBeenCalledTimes(1);
+  });
+
+  test(`uses a fallback message when the error response body has no error field`, async () => {
+    window.fetch = jest.fn(() => Promise.resolve({ status: 503, text: () => Promise.resolve("{}") })) as jest.Mock;
+
+    const processing = new FinteqHubProcessing({ apiUrl, fingerprintVisitorId, merchantId, sessionId, retryOptions: { retryCount: 0 } });
+
+    await expect(processing.getSession()).rejects.toMatchObject({
+      name: "RequestError",
+      message: "unexpected response status 503",
+      diagnostics: { response: { status: 503 } },
+    });
+  });
+
+  test(`error field in a 200 response rejects with RequestError and diagnostics`, async () => {
+    const fetchFn = (window.fetch = jest.fn(() =>
+      Promise.resolve({ status: 200, text: () => Promise.resolve(JSON.stringify({ error: "insufficient funds" })) })
+    ) as jest.Mock);
+
+    const processing = new FinteqHubProcessing({ apiUrl, fingerprintVisitorId, merchantId, sessionId });
+
+    const err = await processing.getSession().catch((e) => e);
+    expect(err).toBeInstanceOf(RequestError);
+    expect(err.message).toBe("insufficient funds");
+    expect(err.diagnostics.kind).toBe("http_error");
+    // the body of a 200 response may carry session credentials and must never be dumped
+    expect(err.diagnostics.response).toEqual({ status: 200, body: undefined });
+
+    expect(fetchFn).toHaveBeenCalledTimes(1);
+    expect(warnSpy).not.toHaveBeenCalled();
+  });
+});
+
+describe(`constructor options validation should work correctly`, () => {
+  const options = {
+    apiUrl: "api-url",
+    fingerprintVisitorId: "fingerprint-visitor-id",
+    merchantId: "merchant-id",
+    sessionId: "session-id",
+  };
+
+  test(`throws when called with positional arguments instead of an options object`, () => {
+    expect(
+      () => new FinteqHubProcessing("api-url" as unknown as typeof options)
+    ).toThrow('sdk-js: constructor expects an options object');
+  });
+
+  test(`throws when a required option is missing`, () => {
+    const { sessionId, ...incomplete } = options;
+    expect(() => new FinteqHubProcessing(incomplete as typeof options)).toThrow(
+      'sdk-js: option "sessionId" must be a non-empty string'
+    );
+  });
+
+  test(`throws when isSecure is not a boolean`, () => {
+    expect(
+      () => new FinteqHubProcessing({ ...options, isSecure: "yes" as unknown as boolean })
+    ).toThrow('sdk-js: option "isSecure" must be a boolean');
+  });
+
+  test(`throws when retryCount is not a non-negative integer`, () => {
+    expect(
+      () => new FinteqHubProcessing({ ...options, retryOptions: { retryCount: -1 } })
+    ).toThrow('sdk-js: option "retryOptions.retryCount" must be a non-negative integer');
+    expect(
+      () => new FinteqHubProcessing({ ...options, retryOptions: { retryCount: "5" as unknown as number } })
+    ).toThrow('sdk-js: option "retryOptions.retryCount" must be a non-negative integer');
+  });
+
+  test(`throws when retryStatusCode is not a function`, () => {
+    expect(
+      () => new FinteqHubProcessing({ ...options, retryOptions: { retryStatusCode: [500] as unknown as () => boolean } })
+    ).toThrow('sdk-js: option "retryOptions.retryStatusCode" must be a function');
+  });
+
+  test(`accepts valid options`, () => {
+    expect(
+      () => new FinteqHubProcessing({ ...options, isSecure: true, retryOptions: { retryCount: 0, retryStatusCode: () => false } })
+    ).not.toThrow();
   });
 });
