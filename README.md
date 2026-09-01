@@ -106,7 +106,7 @@ processing
 
 ## Releasing
 
-On every version bump update **both** `package.json` `version` and `SDK_VERSION` in `src/version.ts` — they must stay in sync so the `X-Finteqhub-SDK` header reports the right version. `src/version.test.ts` fails CI if they drift (`node scripts/sync-version.js` updates `src/version.ts` from `package.json`).
+On every version bump update **both** `package.json` `version` and `SDK_VERSION` in `src/version.ts` — they must stay in sync so the `X-Finteqhub-SDK` header reports the right version. `src/version.test.ts` fails CI if they drift (`node scripts/sync-version.js` updates `src/version.ts` from `package.json`). Describe the release in [CHANGELOG.md](CHANGELOG.md), including migration notes for breaking changes.
 
 ### Beta releases
 
