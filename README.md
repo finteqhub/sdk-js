@@ -27,7 +27,7 @@ Failed HTTP requests are retried automatically with exponential backoff (`100ms 
 ```
 interface RetryOptions {
   retryCount?: number; // number of retries after the initial attempt, default 5; 0 disables retries
-  retryStatusCode?: (statusCode: number) => boolean; // default: statusCode < 200 || statusCode === 400 || statusCode === 408 || statusCode >= 500
+  retryStatusCode?: (statusCode: number) => boolean; // default: statusCode < 200 || statusCode === 408 || statusCode >= 500
 }
 ```
 

@@ -26,7 +26,7 @@ Notable changes to `@finteqhub/sdk-js`. The format is based on [Keep a Changelog
 
 ### Added
 
-- Failed HTTP requests are retried automatically with exponential backoff (`100ms → 200ms → 500ms → 1000ms → 2000ms`), 5 retries by default. Network errors are always retried; responses are retried when the status is `< 200`, `400`, `408`, or `>= 500`. Configurable via the new `retryOptions` constructor option (`retryCount`, `retryStatusCode`) — see the README for details.
+- Failed HTTP requests are retried automatically with exponential backoff (`100ms → 200ms → 500ms → 1000ms → 2000ms`), 5 retries by default. Network errors are always retried; responses are retried when the status is `< 200`, `408`, or `>= 500` (400 is not retried: the API returns it for deterministic validation failures and duplicate-submit rejections). Configurable via the new `retryOptions` constructor option (`retryCount`, `retryStatusCode`) — see the README for details.
 - `RequestError.diagnostics` carries a full diagnostic payload: failure kind (`network` / `http_error` / `invalid_json`), SDK version, request info with a per-attempt log, sanitized response body for non-200 responses (truncated, digit runs masked), and environment info (`navigator.onLine`, `document.visibilityState`, `navigator.connection`). The same payload is logged with `console.error`; each retry is reported with `console.warn`.
 - New exports: `RequestError`, `ProcessingOptions`, `RetryOptions`, `RequestDiagnostics`, `RequestAttempt`.
 - `publish-beta` GitHub workflow: publishes `<version>-beta.<run number>` to npm under the `beta` dist-tag without touching `latest`.

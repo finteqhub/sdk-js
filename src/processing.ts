@@ -89,8 +89,10 @@ const MAX_BODY_SNIPPET_LENGTH = 500;
 // masks long digit runs (PANs, phone numbers) before a response body lands in logs
 const sanitizeBody = (body: string) => body.slice(0, MAX_BODY_SNIPPET_LENGTH).replace(/\d{6,}/g, "***");
 
+// 400 is deliberately not retried: the backend returns it for deterministic validation
+// failures and for duplicate-submit rejections — retrying either only delays the error
 const defaultRetryStatusCode = (statusCode: number) =>
-  statusCode < 200 || statusCode === 400 || statusCode === 408 || statusCode >= 500;
+  statusCode < 200 || statusCode === 408 || statusCode >= 500;
 
 const REQUIRED_OPTIONS = ["apiUrl", "fingerprintVisitorId", "merchantId", "sessionId"] as const;
 

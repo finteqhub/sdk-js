@@ -773,6 +773,22 @@ describe(`retry and error diagnostics should work correctly`, () => {
     expect(errorSpy).toHaveBeenCalledTimes(1);
   });
 
+  test(`does not retry 400 responses (deterministic validation and duplicate-submit rejections)`, async () => {
+    const fetchFn = (window.fetch = jest.fn(() =>
+      Promise.resolve({ status: 400, text: () => Promise.resolve(JSON.stringify({ error: "invalid card" })) })
+    ) as jest.Mock);
+
+    const processing = new FinteqHubProcessing({ apiUrl, fingerprintVisitorId, merchantId, sessionId });
+    await expect(processing.getSession()).rejects.toMatchObject({
+      name: "RequestError",
+      message: "invalid card",
+      diagnostics: { kind: "http_error", response: { status: 400 } },
+    });
+
+    expect(fetchFn).toHaveBeenCalledTimes(1);
+    expect(warnSpy).not.toHaveBeenCalled();
+  });
+
   test(`stops retrying after retryCount and rejects with response error`, async () => {
     const fetchFn = (window.fetch = jest.fn(() =>
       Promise.resolve({ status: 500, text: () => Promise.resolve(JSON.stringify({ error: "server error" })) })
