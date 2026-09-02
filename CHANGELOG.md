@@ -2,7 +2,7 @@
 
 Notable changes to `@finteqhub/sdk-js`. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## 0.12.0 (unreleased)
+## 0.12.0
 
 ### Breaking changes
 
