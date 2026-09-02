@@ -810,7 +810,7 @@ describe(`retry and error diagnostics should work correctly`, () => {
       diagnostics: {
         kind: "http_error",
         sdkVersion: SDK_VERSION,
-        response: { status: 404, body: JSON.stringify({ error: "not found" }) },
+        response: { status: 404, body: JSON.stringify({ error: "not found" }), error: "not found" },
         request: expect.objectContaining({
           attempts: [expect.objectContaining({ status: 404, durationMs: expect.any(Number) })],
         }),
@@ -820,6 +820,7 @@ describe(`retry and error diagnostics should work correctly`, () => {
     expect(fetchFn).toHaveBeenCalledTimes(1);
     expect(warnSpy).not.toHaveBeenCalled();
     expect(errorSpy).toHaveBeenCalledTimes(1);
+    expect(errorSpy).toHaveBeenCalledWith("sdk-js: request failed: not found", expect.objectContaining({ kind: "http_error" }));
   });
 
   test(`does not retry 400 responses (deterministic validation and duplicate-submit rejections)`, async () => {
@@ -1008,7 +1009,10 @@ describe(`retry and error diagnostics should work correctly`, () => {
     expect(fetchFn).toHaveBeenCalledTimes(2);
     expect(warnSpy).toHaveBeenCalledTimes(1);
     expect(errorSpy).toHaveBeenCalledTimes(1);
-    expect(errorSpy.mock.calls[0][1]).toEqual(expect.objectContaining({ error: expect.anything() }));
+    expect(errorSpy).toHaveBeenCalledWith(
+      `sdk-js: request failed: request to ${apiUrl}/v1/sessions/${sessionId} failed after 2 attempt(s): Failed to fetch`,
+      expect.objectContaining({ error: expect.anything() })
+    );
   });
 
   test(`logs console.error with diagnostics even when retries are disabled`, async () => {
@@ -1088,7 +1092,7 @@ describe(`retry and error diagnostics should work correctly`, () => {
     await expect(processing.getSession()).rejects.toMatchObject({
       name: "RequestError",
       message: "unexpected response status 503",
-      diagnostics: { response: { status: 503 } },
+      diagnostics: { response: { status: 503, error: undefined } },
     });
   });
 
@@ -1104,7 +1108,8 @@ describe(`retry and error diagnostics should work correctly`, () => {
     expect(err.message).toBe("insufficient funds");
     expect(err.diagnostics.kind).toBe("http_error");
     // the body of a 200 response may carry session credentials and must never be dumped
-    expect(err.diagnostics.response).toEqual({ status: 200, body: undefined });
+    expect(err.diagnostics.response).toEqual({ status: 200, body: undefined, error: "insufficient funds" });
+    expect(errorSpy).toHaveBeenCalledWith("sdk-js: request failed: insufficient funds", err.diagnostics);
 
     expect(fetchFn).toHaveBeenCalledTimes(1);
     expect(warnSpy).not.toHaveBeenCalled();

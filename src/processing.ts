@@ -48,10 +48,12 @@ export type RequestDiagnostics = {
     cause?: unknown;
   };
   // present when the server responded; body is truncated, digit runs are masked,
-  // and it is never included for 200 responses (may carry session credentials)
+  // and it is never included for 200 responses (may carry session credentials);
+  // error is the `error` field of the response body, when it has one (any status)
   response?: {
     status: number;
     body?: string;
+    error?: string;
   };
   request: {
     url: string;
@@ -230,7 +232,7 @@ export class FinteqHubProcessing {
       throw this.responseError(
         "invalid_json",
         `request to ${url} returned invalid JSON (status ${response.status})`,
-        url, options, attempts, response, body, parseError
+        url, options, attempts, { status: response.status, body }, parseError
       );
     }
 
@@ -238,7 +240,7 @@ export class FinteqHubProcessing {
       throw this.responseError(
         "http_error",
         result?.error || `unexpected response status ${response.status}`,
-        url, options, attempts, response, body
+        url, options, attempts, { status: response.status, body, error: result?.error }
       );
     }
 
@@ -267,9 +269,12 @@ export class FinteqHubProcessing {
         attempts.push({ durationMs: Date.now() - startedAt, status: response?.status, error: e.message });
 
         if (attempt > retryCount) {
-          const diagnostics = this.collectDiagnostics("network", url, options, attempts, e, response);
-          console.error("sdk-js: request failed", diagnostics);
-          throw new RequestError(`request to ${url} failed after ${attempt} attempt(s): ${e.message}`, diagnostics);
+          const message = `request to ${url} failed after ${attempt} attempt(s): ${e.message}`;
+          const diagnostics = this.collectDiagnostics(
+            "network", url, options, attempts, e, response ? { status: response.status } : undefined
+          );
+          console.error(`sdk-js: request failed: ${message}`, diagnostics);
+          throw new RequestError(message, diagnostics);
         }
         reason = e.message;
       }
@@ -297,12 +302,11 @@ export class FinteqHubProcessing {
     url: string,
     options: RequestOptions,
     attempts: RequestAttempt[],
-    response: Response,
-    body?: string,
+    response: RequestDiagnostics["response"],
     error?: RequestDiagnostics["error"]
   ) {
-    const diagnostics = this.collectDiagnostics(kind, url, options, attempts, error, response, body);
-    console.error("sdk-js: request failed", diagnostics);
+    const diagnostics = this.collectDiagnostics(kind, url, options, attempts, error, response);
+    console.error(`sdk-js: request failed: ${message}`, diagnostics);
     return new RequestError(message, diagnostics);
   }
 
@@ -312,8 +316,7 @@ export class FinteqHubProcessing {
     options: RequestOptions,
     attempts: RequestAttempt[],
     error?: RequestDiagnostics["error"],
-    response?: Response,
-    body?: string
+    response?: RequestDiagnostics["response"]
   ): RequestDiagnostics {
     const connection = (navigator as { connection?: { effectiveType?: string; rtt?: number; downlink?: number } }).connection;
 
@@ -328,7 +331,7 @@ export class FinteqHubProcessing {
             cause: error.cause,
           }
         : undefined,
-      response: response ? { status: response.status, body } : undefined,
+      response,
       request: {
         url,
         method: options.method,
