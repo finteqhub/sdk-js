@@ -1,3 +1,5 @@
+import type { ProcessingOptions } from "./processing";
+
 export const DeviceType = {
   Unknown: "unknown",
   Computer: "computer",
@@ -52,6 +54,36 @@ export function getDeviceType() {
   }
 
   return DeviceType.Unknown;
+}
+
+const REQUIRED_OPTIONS = ["apiUrl", "fingerprintVisitorId", "merchantId", "sessionId"] as const;
+
+export function validateOptions(options: ProcessingOptions) {
+  if (typeof options !== "object" || options === null) {
+    throw new TypeError(
+      "sdk-js: constructor expects an options object: { apiUrl, fingerprintVisitorId, merchantId, sessionId, isSecure?, retryOptions? }"
+    );
+  }
+  for (const key of REQUIRED_OPTIONS) {
+    if (typeof options[key] !== "string" || options[key] === "") {
+      throw new TypeError(`sdk-js: option "${key}" must be a non-empty string`);
+    }
+  }
+  if (options.isSecure !== undefined && typeof options.isSecure !== "boolean") {
+    throw new TypeError('sdk-js: option "isSecure" must be a boolean');
+  }
+  if (options.retryOptions !== undefined) {
+    if (typeof options.retryOptions !== "object" || options.retryOptions === null) {
+      throw new TypeError('sdk-js: option "retryOptions" must be an object');
+    }
+    const { retryCount, retryStatusCode } = options.retryOptions;
+    if (retryCount !== undefined && (!Number.isInteger(retryCount) || retryCount < 0)) {
+      throw new TypeError('sdk-js: option "retryOptions.retryCount" must be a non-negative integer');
+    }
+    if (retryStatusCode !== undefined && typeof retryStatusCode !== "function") {
+      throw new TypeError('sdk-js: option "retryOptions.retryStatusCode" must be a function');
+    }
+  }
 }
 
 export function getDeviceData() {

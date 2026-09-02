@@ -1,4 +1,5 @@
-import { uuid, getDeviceType, getDeviceData } from "./utils";
+import { uuid, getDeviceType, getDeviceData, validateOptions } from "./utils";
+import { ProcessingOptions } from "./processing";
 
 test(`function ${uuid.name} should work correctly`, () => {
   Date.now = jest.fn(() => 1487076708000);
@@ -63,6 +64,71 @@ describe("getDeviceType", () => {
       "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.5938.62 Safari/537.36"
     );
     expect(getDeviceType()).toEqual("computer");
+  });
+});
+
+describe(`function ${validateOptions.name} should work correctly`, () => {
+  const options: ProcessingOptions = {
+    apiUrl: "api-url",
+    fingerprintVisitorId: "fingerprint-visitor-id",
+    merchantId: "merchant-id",
+    sessionId: "session-id",
+  };
+
+  test("throws when options is not an object", () => {
+    for (const value of ["api-url", null, undefined, 42]) {
+      expect(() => validateOptions(value as unknown as ProcessingOptions)).toThrow(
+        "sdk-js: constructor expects an options object"
+      );
+    }
+  });
+
+  test.each(["apiUrl", "fingerprintVisitorId", "merchantId", "sessionId"] as const)(
+    `throws when "%s" is missing, empty or not a string`,
+    (key) => {
+      const { [key]: omitted, ...rest } = options;
+      for (const broken of [rest, { ...options, [key]: "" }, { ...options, [key]: 42 }]) {
+        expect(() => validateOptions(broken as ProcessingOptions)).toThrow(
+          `sdk-js: option "${key}" must be a non-empty string`
+        );
+      }
+    }
+  );
+
+  test("throws when isSecure is not a boolean", () => {
+    expect(() => validateOptions({ ...options, isSecure: "yes" } as unknown as ProcessingOptions)).toThrow(
+      'sdk-js: option "isSecure" must be a boolean'
+    );
+  });
+
+  test("throws when retryOptions is not an object", () => {
+    for (const retryOptions of [5, "retry", null]) {
+      expect(() => validateOptions({ ...options, retryOptions } as unknown as ProcessingOptions)).toThrow(
+        'sdk-js: option "retryOptions" must be an object'
+      );
+    }
+  });
+
+  test("throws when retryCount is not a non-negative integer", () => {
+    for (const retryCount of [-1, 1.5, NaN, "5"]) {
+      expect(() =>
+        validateOptions({ ...options, retryOptions: { retryCount } } as unknown as ProcessingOptions)
+      ).toThrow('sdk-js: option "retryOptions.retryCount" must be a non-negative integer');
+    }
+  });
+
+  test("throws when retryStatusCode is not a function", () => {
+    expect(() =>
+      validateOptions({ ...options, retryOptions: { retryStatusCode: [500] } } as unknown as ProcessingOptions)
+    ).toThrow('sdk-js: option "retryOptions.retryStatusCode" must be a function');
+  });
+
+  test("accepts valid options", () => {
+    expect(() => validateOptions(options)).not.toThrow();
+    expect(() => validateOptions({ ...options, retryOptions: {} })).not.toThrow();
+    expect(() =>
+      validateOptions({ ...options, isSecure: true, retryOptions: { retryCount: 0, retryStatusCode: () => false } })
+    ).not.toThrow();
   });
 });
 
