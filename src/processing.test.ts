@@ -742,6 +742,11 @@ describe(`retry and error diagnostics should work correctly`, () => {
     expect(res).toEqual(session);
     expect(fetchFn).toHaveBeenCalledTimes(3);
     expect(warnSpy).toHaveBeenCalledTimes(2);
+
+    // retries of one logical request must reuse the same x-request-id — the backend dedupes by it
+    const requestIds = fetchFn.mock.calls.map((call) => call[1].headers["x-request-id"]);
+    expect(requestIds[0]).toBeTruthy();
+    expect(new Set(requestIds).size).toBe(1);
   });
 
   test(`does not retry non-retryable status codes`, async () => {
@@ -864,10 +869,12 @@ describe(`retry and error diagnostics should work correctly`, () => {
       diagnostics: {
         kind: "network",
         error: expect.objectContaining({ name: "TypeError", message: "network error" }),
+        // headers arrived before the body failed, so the status is known and kept
+        response: { status: 200 },
         request: expect.objectContaining({
           attempts: [
-            expect.objectContaining({ error: "network error", durationMs: expect.any(Number) }),
-            expect.objectContaining({ error: "network error", durationMs: expect.any(Number) }),
+            expect.objectContaining({ status: 200, error: "network error", durationMs: expect.any(Number) }),
+            expect.objectContaining({ status: 200, error: "network error", durationMs: expect.any(Number) }),
           ],
         }),
       },
@@ -958,7 +965,7 @@ describe(`retry and error diagnostics should work correctly`, () => {
 
     await expect(processing.getSession()).rejects.toMatchObject({
       name: "RequestError",
-      message: expect.stringContaining("invalid JSON"),
+      message: `request to ${apiUrl}/v1/sessions/${sessionId} returned invalid JSON (status 502)`,
       diagnostics: {
         kind: "invalid_json",
         error: expect.objectContaining({ name: "SyntaxError" }),
@@ -967,6 +974,22 @@ describe(`retry and error diagnostics should work correctly`, () => {
     });
 
     expect(errorSpy).toHaveBeenCalledTimes(1);
+  });
+
+  test(`parse error details of a 200 response are not leaked into diagnostics`, async () => {
+    window.fetch = jest.fn(() =>
+      Promise.resolve({ status: 200, text: () => Promise.resolve("<html>secret-session-token</html>") })
+    ) as jest.Mock;
+
+    const processing = new FinteqHubProcessing({ apiUrl, fingerprintVisitorId, merchantId, sessionId, retryOptions: { retryCount: 0 } });
+
+    const err = await processing.getSession().catch((e) => e);
+    expect(err).toBeInstanceOf(RequestError);
+    expect(err.message).toBe(`request to ${apiUrl}/v1/sessions/${sessionId} returned invalid JSON (status 200)`);
+    expect(err.diagnostics.kind).toBe("invalid_json");
+    expect(err.diagnostics.response).toEqual({ status: 200, body: undefined });
+    // V8's JSON.parse message quotes the malformed input — 200 body content must not leak through it
+    expect(JSON.stringify(err.diagnostics)).not.toContain("secret-session-token");
   });
 
   test(`uses a fallback message when the error response body has no error field`, async () => {

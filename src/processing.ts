@@ -33,8 +33,8 @@ export interface ProcessingOptions {
 
 export type RequestAttempt = {
   durationMs: number;
-  status?: number; // present when the server responded
-  error?: string; // present when the attempt threw (network failure)
+  status?: number; // present when the server responded (headers received)
+  error?: string; // present when the attempt threw; both are set when reading the body failed
 };
 
 export type RequestDiagnostics = {
@@ -246,10 +246,19 @@ export class FinteqHubProcessing {
     try {
       result = JSON.parse(text);
     } catch (e) {
+      // V8 quotes an excerpt of the input in the parse error message (and stack), so it
+      // follows the same policy as the body: sanitized for non-200, omitted for 200 responses
+      const parseError = {
+        name: e.name,
+        message:
+          response.status !== 200
+            ? sanitizeBody(e.message)
+            : "parse error message omitted (200 response body may carry credentials)",
+      };
       throw this.responseError(
         "invalid_json",
-        `request to ${url} returned invalid JSON (status ${response.status}): ${e.message}`,
-        url, options, attempts, response, body, e
+        `request to ${url} returned invalid JSON (status ${response.status})`,
+        url, options, attempts, response, body, parseError
       );
     }
 
@@ -271,20 +280,22 @@ export class FinteqHubProcessing {
 
     for (let attempt = 1; ; attempt += 1) {
       let reason: string;
+      let response: Response | undefined;
       let result: { response: Response; text: string } | undefined;
       const startedAt = Date.now();
 
       try {
-        const response = await fetch(url, options);
+        response = await fetch(url, options);
         // the connection can also drop while the body is being read — that is a network failure too
         const text = await response.text();
         result = { response, text };
         attempts.push({ durationMs: Date.now() - startedAt, status: response.status });
       } catch (e) {
-        attempts.push({ durationMs: Date.now() - startedAt, error: e.message });
+        // status is known when the failure happened while reading the body of a received response
+        attempts.push({ durationMs: Date.now() - startedAt, status: response?.status, error: e.message });
 
         if (attempt > retryCount) {
-          const diagnostics = this.collectDiagnostics("network", url, options, attempts, e);
+          const diagnostics = this.collectDiagnostics("network", url, options, attempts, e, response);
           console.error("sdk-js: request failed", diagnostics);
           throw new RequestError(`request to ${url} failed after ${attempt} attempt(s): ${e.message}`, diagnostics);
         }
@@ -316,7 +327,7 @@ export class FinteqHubProcessing {
     attempts: RequestAttempt[],
     response: Response,
     body?: string,
-    error?: Error
+    error?: RequestDiagnostics["error"]
   ) {
     const diagnostics = this.collectDiagnostics(kind, url, options, attempts, error, response, body);
     console.error("sdk-js: request failed", diagnostics);
@@ -328,7 +339,7 @@ export class FinteqHubProcessing {
     url: string,
     options: RequestOptions,
     attempts: RequestAttempt[],
-    error?: Error,
+    error?: RequestDiagnostics["error"],
     response?: Response,
     body?: string
   ): RequestDiagnostics {
@@ -342,7 +353,7 @@ export class FinteqHubProcessing {
             name: error.name,
             message: error.message,
             stack: error.stack,
-            cause: (error as { cause?: unknown }).cause,
+            cause: error.cause,
           }
         : undefined,
       response: response ? { status: response.status, body } : undefined,

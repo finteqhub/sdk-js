@@ -35,9 +35,9 @@ Network errors (the browser could not reach the server at all, e.g. `TypeError: 
 
 Every retry attempt is reported with `console.warn`. When a request finally fails, the SDK logs `console.error` with a full diagnostic dump and rejects with a `RequestError` whose `diagnostics` field carries the same payload — include it in your error reporting. `diagnostics.kind` tells the failure class apart:
 
-- `"network"` — the browser never got a complete response (e.g. `TypeError: Failed to fetch`, or the body could not be read); `diagnostics.error` describes the thrown error, `message` is `request to <url> failed after N attempt(s): ...`;
+- `"network"` — the browser never got a complete response (e.g. `TypeError: Failed to fetch`, or the body could not be read); `diagnostics.error` describes the thrown error, `diagnostics.response.status` is present when headers had arrived before the failure, `message` is `request to <url> failed after N attempt(s): ...`;
 - `"http_error"` — an error response (non-200 status, or an `error` field in the body); `message` is the error text from the response body (or `unexpected response status <code>` when the body has none), `diagnostics.response.status` carries the HTTP status;
-- `"invalid_json"` — the response body is not valid JSON; both `diagnostics.error` (the parse error) and `diagnostics.response` are set.
+- `"invalid_json"` — the response body is not valid JSON; both `diagnostics.error` (the parse error; its message follows the same policy as the body — sanitized for non-200, omitted for 200 responses) and `diagnostics.response` are set.
 
 Every `diagnostics` payload also includes:
 
