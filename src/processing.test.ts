@@ -749,6 +749,51 @@ describe(`retry and error diagnostics should work correctly`, () => {
     expect(new Set(requestIds).size).toBe(1);
   });
 
+  test(`defaults to 5 retries with 100/200/500/1000/2000ms backoff when retryOptions are not passed`, async () => {
+    // capture backoff delays instead of waiting them out
+    const delays: number[] = [];
+    const setTimeoutSpy = jest.spyOn(window, "setTimeout").mockImplementation(((callback: () => void, delay?: number) => {
+      delays.push(delay ?? 0);
+      callback();
+      return 0;
+    }) as unknown as typeof window.setTimeout);
+
+    try {
+      const fetchFn = (window.fetch = jest.fn(() =>
+        Promise.resolve({ status: 500, text: () => Promise.resolve(JSON.stringify({ error: "server error" })) })
+      ) as jest.Mock);
+
+      const processing = new FinteqHubProcessing({ apiUrl, fingerprintVisitorId, merchantId, sessionId });
+      await expect(processing.getSession()).rejects.toMatchObject({
+        name: "RequestError",
+        message: "server error",
+      });
+
+      expect(fetchFn).toHaveBeenCalledTimes(6); // the initial attempt + 5 retries
+      expect(warnSpy).toHaveBeenCalledTimes(5);
+      expect(delays).toEqual([100, 200, 500, 1000, 2000]);
+    } finally {
+      setTimeoutSpy.mockRestore();
+    }
+  });
+
+  test.each([199, 408])(`retries status %i by default`, async (status) => {
+    let count = 0;
+    const fetchFn = (window.fetch = jest.fn(() => {
+      count += 1;
+      return count === 1
+        ? Promise.resolve({ status, text: () => Promise.resolve(JSON.stringify({ error: "try again" })) })
+        : Promise.resolve({ status: 200, text: () => Promise.resolve(JSON.stringify(session)) });
+    }) as jest.Mock);
+
+    const processing = new FinteqHubProcessing({ apiUrl, fingerprintVisitorId, merchantId, sessionId });
+    const res = await processing.getSession();
+
+    expect(res).toEqual(session);
+    expect(fetchFn).toHaveBeenCalledTimes(2);
+    expect(warnSpy).toHaveBeenCalledTimes(1);
+  });
+
   test(`does not retry non-retryable status codes`, async () => {
     const fetchFn = (window.fetch = jest.fn(() =>
       Promise.resolve({ status: 404, text: () => Promise.resolve(JSON.stringify({ error: "not found" })) })
@@ -836,6 +881,29 @@ describe(`retry and error diagnostics should work correctly`, () => {
     expect(res).toEqual(session);
     expect(fetchFn).toHaveBeenCalledTimes(2);
     expect(warnSpy).toHaveBeenCalledTimes(1);
+  });
+
+  test(`custom retryStatusCode replaces the default set of retryable statuses`, async () => {
+    const fetchFn = (window.fetch = jest.fn(() =>
+      Promise.resolve({ status: 500, text: () => Promise.resolve(JSON.stringify({ error: "server error" })) })
+    ) as jest.Mock);
+
+    const processing = new FinteqHubProcessing({
+      apiUrl,
+      fingerprintVisitorId,
+      merchantId,
+      sessionId,
+      retryOptions: { retryStatusCode: (statusCode) => statusCode === 404 },
+    });
+
+    // 500 is retryable by default, but the custom predicate does not include it
+    await expect(processing.getSession()).rejects.toMatchObject({
+      name: "RequestError",
+      message: "server error",
+    });
+
+    expect(fetchFn).toHaveBeenCalledTimes(1);
+    expect(warnSpy).not.toHaveBeenCalled();
   });
 
   test(`retries network errors until success`, async () => {
