@@ -65,3 +65,13 @@ processing
 ## Releasing
 
 On every version bump update **both** `package.json` `version` and `SDK_VERSION` in `src/version.ts` — they must stay in sync so the `X-Finteqhub-SDK` header reports the right version. `src/version.test.ts` fails CI if they drift.
+
+### Beta releases
+
+To try changes before bumping the version, run the `publish-beta` workflow (GitHub → Actions → publish-beta → Run workflow, pick your branch). It publishes `<current version>-beta.<run number>` to npm under the `beta` dist-tag — `latest` and the version in the repo stay untouched. Install it with:
+
+```
+npm i @finteqhub/sdk-js@beta
+```
+
+or pin the exact version printed in the workflow summary.
