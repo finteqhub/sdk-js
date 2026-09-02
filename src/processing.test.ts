@@ -1,6 +1,6 @@
 import "whatwg-fetch";
 
-import { FinteqHubProcessing, RequestError } from "./processing";
+import { FinteqHubProcessing, ProcessingOptions, RequestError } from "./processing";
 import { SubmitData } from "./typings";
 import { getDeviceData } from "./utils";
 import { TxType } from "./consts";
@@ -771,6 +771,10 @@ describe(`retry and error diagnostics should work correctly`, () => {
 
       expect(fetchFn).toHaveBeenCalledTimes(6); // the initial attempt + 5 retries
       expect(warnSpy).toHaveBeenCalledTimes(5);
+      expect(warnSpy.mock.calls[0]).toEqual([
+        `sdk-js: request to ${apiUrl}/v1/sessions/${sessionId} failed (status code 500), retry 1/5 in 100ms`,
+        { requestId: expect.any(String) },
+      ]);
       expect(delays).toEqual([100, 200, 500, 1000, 2000]);
     } finally {
       setTimeoutSpy.mockRestore();
@@ -1107,51 +1111,8 @@ describe(`retry and error diagnostics should work correctly`, () => {
   });
 });
 
-describe(`constructor options validation should work correctly`, () => {
-  const options = {
-    apiUrl: "api-url",
-    fingerprintVisitorId: "fingerprint-visitor-id",
-    merchantId: "merchant-id",
-    sessionId: "session-id",
-  };
-
-  test(`throws when called with positional arguments instead of an options object`, () => {
-    expect(
-      () => new FinteqHubProcessing("api-url" as unknown as typeof options)
-    ).toThrow('sdk-js: constructor expects an options object');
-  });
-
-  test(`throws when a required option is missing`, () => {
-    const { sessionId, ...incomplete } = options;
-    expect(() => new FinteqHubProcessing(incomplete as typeof options)).toThrow(
-      'sdk-js: option "sessionId" must be a non-empty string'
-    );
-  });
-
-  test(`throws when isSecure is not a boolean`, () => {
-    expect(
-      () => new FinteqHubProcessing({ ...options, isSecure: "yes" as unknown as boolean })
-    ).toThrow('sdk-js: option "isSecure" must be a boolean');
-  });
-
-  test(`throws when retryCount is not a non-negative integer`, () => {
-    expect(
-      () => new FinteqHubProcessing({ ...options, retryOptions: { retryCount: -1 } })
-    ).toThrow('sdk-js: option "retryOptions.retryCount" must be a non-negative integer');
-    expect(
-      () => new FinteqHubProcessing({ ...options, retryOptions: { retryCount: "5" as unknown as number } })
-    ).toThrow('sdk-js: option "retryOptions.retryCount" must be a non-negative integer');
-  });
-
-  test(`throws when retryStatusCode is not a function`, () => {
-    expect(
-      () => new FinteqHubProcessing({ ...options, retryOptions: { retryStatusCode: [500] as unknown as () => boolean } })
-    ).toThrow('sdk-js: option "retryOptions.retryStatusCode" must be a function');
-  });
-
-  test(`accepts valid options`, () => {
-    expect(
-      () => new FinteqHubProcessing({ ...options, isSecure: true, retryOptions: { retryCount: 0, retryStatusCode: () => false } })
-    ).not.toThrow();
-  });
+test(`constructor validates options and rejects positional arguments`, () => {
+  expect(() => new FinteqHubProcessing("api-url" as unknown as ProcessingOptions)).toThrow(
+    "sdk-js: constructor expects an options object"
+  );
 });

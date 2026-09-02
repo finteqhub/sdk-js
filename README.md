@@ -22,7 +22,7 @@ const processing = new FinteqHubProcessing({
 
 ## Retries and error diagnostics
 
-Failed HTTP requests are retried automatically with exponential backoff (`100ms → 200ms → 500ms → 1000ms → 2000ms`). Retries can be configured via the `retryOptions` constructor option:
+Failed HTTP requests are retried automatically with exponential backoff (`100ms → 200ms → 500ms → 1000ms → 2000ms`; every retry after the fifth waits 2000ms). Retries can be configured via the `retryOptions` constructor option:
 
 ```
 interface RetryOptions {

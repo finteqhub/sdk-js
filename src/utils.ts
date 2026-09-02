@@ -1,4 +1,4 @@
-import { ProcessingOptions } from "./processing";
+import type { ProcessingOptions } from "./processing";
 
 export const DeviceType = {
   Unknown: "unknown",

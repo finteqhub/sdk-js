@@ -19,7 +19,7 @@ Notable changes to `@finteqhub/sdk-js`. The format is based on [Keep a Changelog
 - The constructor validates its options and throws a `TypeError` when a required option is missing, empty, or has the wrong type (previously invalid arguments were accepted silently).
 - Failed requests now reject with a `RequestError` (subclass of `Error`) instead of a plain `Error`. Existing `catch` blocks keep working, but error messages changed for some failure classes:
   - network failures reject with `request to <url> failed after N attempt(s): <reason>` (previously the raw `fetch` error, e.g. `Failed to fetch`);
-  - non-200 responses without an `error` field in the body reject with `unexpected response status <code>` (previously the message was `undefined`);
+  - non-200 responses without an `error` field in the body reject with `unexpected response status <code>` (previously the message was empty);
   - responses with a non-JSON body reject with `request to <url> returned invalid JSON (status <code>)` (previously the raw `JSON.parse` error).
 
   Code that matches on `error.message` for these cases needs updating; code that only reads `error.message` for display keeps working.
