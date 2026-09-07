@@ -1,6 +1,6 @@
 import "whatwg-fetch";
 
-import { FinteqHubProcessing, ProcessingOptions, RequestError } from "./processing";
+import { FinteqHubProcessing, RequestError } from "./processing";
 import { SubmitData } from "./typings";
 import { getDeviceData } from "./utils";
 import { TxType } from "./consts";
@@ -25,7 +25,7 @@ describe(`function ${FinteqHubProcessing.prototype.getSession.name} should work 
   const merchantId = "merchant-id";
   const sessionId = "session-id";
 
-  const processing = new FinteqHubProcessing({ apiUrl, fingerprintVisitorId, merchantId, sessionId });
+  const processing = new FinteqHubProcessing(apiUrl, fingerprintVisitorId, merchantId, sessionId);
 
   const session = {
     operation: {
@@ -111,7 +111,7 @@ describe(`function ${FinteqHubProcessing.prototype.getSession.name} with secure 
   const sessionId = "session-id";
   const isSecure = true;
 
-  const processing = new FinteqHubProcessing({ apiUrl, fingerprintVisitorId, merchantId, sessionId, isSecure });
+  const processing = new FinteqHubProcessing(apiUrl, fingerprintVisitorId, merchantId, sessionId, isSecure);
 
   const session = {
     operation: {
@@ -196,7 +196,7 @@ describe(`function ${FinteqHubProcessing.prototype.submitForm.name} should work 
   const merchantId = "merchant-id";
   const sessionId = "session-id";
 
-  const processing = new FinteqHubProcessing({ apiUrl, fingerprintVisitorId, merchantId, sessionId });
+  const processing = new FinteqHubProcessing(apiUrl, fingerprintVisitorId, merchantId, sessionId);
 
   const data: SubmitData = {
     credentials: {
@@ -459,7 +459,7 @@ describe(`function ${FinteqHubProcessing.prototype.submitForm.name} with secure 
   const sessionId = "session-id";
   const isSecure = true;
 
-  const processing = new FinteqHubProcessing({ apiUrl, fingerprintVisitorId, merchantId, sessionId, isSecure });
+  const processing = new FinteqHubProcessing(apiUrl, fingerprintVisitorId, merchantId, sessionId, isSecure);
 
   const data: SubmitData = {
     credentials: {
@@ -736,7 +736,7 @@ describe(`retry and error diagnostics should work correctly`, () => {
         : Promise.resolve({ status: 200, text: () => Promise.resolve(JSON.stringify(session)) });
     }) as jest.Mock);
 
-    const processing = new FinteqHubProcessing({ apiUrl, fingerprintVisitorId, merchantId, sessionId });
+    const processing = new FinteqHubProcessing(apiUrl, fingerprintVisitorId, merchantId, sessionId);
     const res = await processing.getSession();
 
     expect(res).toEqual(session);
@@ -763,7 +763,7 @@ describe(`retry and error diagnostics should work correctly`, () => {
         Promise.resolve({ status: 500, text: () => Promise.resolve(JSON.stringify({ error: "server error" })) })
       ) as jest.Mock);
 
-      const processing = new FinteqHubProcessing({ apiUrl, fingerprintVisitorId, merchantId, sessionId });
+      const processing = new FinteqHubProcessing(apiUrl, fingerprintVisitorId, merchantId, sessionId);
       await expect(processing.getSession()).rejects.toMatchObject({
         name: "RequestError",
         message: "server error",
@@ -790,7 +790,7 @@ describe(`retry and error diagnostics should work correctly`, () => {
         : Promise.resolve({ status: 200, text: () => Promise.resolve(JSON.stringify(session)) });
     }) as jest.Mock);
 
-    const processing = new FinteqHubProcessing({ apiUrl, fingerprintVisitorId, merchantId, sessionId });
+    const processing = new FinteqHubProcessing(apiUrl, fingerprintVisitorId, merchantId, sessionId);
     const res = await processing.getSession();
 
     expect(res).toEqual(session);
@@ -803,7 +803,7 @@ describe(`retry and error diagnostics should work correctly`, () => {
       Promise.resolve({ status: 404, text: () => Promise.resolve(JSON.stringify({ error: "not found" })) })
     ) as jest.Mock);
 
-    const processing = new FinteqHubProcessing({ apiUrl, fingerprintVisitorId, merchantId, sessionId });
+    const processing = new FinteqHubProcessing(apiUrl, fingerprintVisitorId, merchantId, sessionId);
     await expect(processing.getSession()).rejects.toMatchObject({
       name: "RequestError",
       message: "not found",
@@ -828,7 +828,7 @@ describe(`retry and error diagnostics should work correctly`, () => {
       Promise.resolve({ status: 400, text: () => Promise.resolve(JSON.stringify({ error: "invalid card" })) })
     ) as jest.Mock);
 
-    const processing = new FinteqHubProcessing({ apiUrl, fingerprintVisitorId, merchantId, sessionId });
+    const processing = new FinteqHubProcessing(apiUrl, fingerprintVisitorId, merchantId, sessionId);
     await expect(processing.getSession()).rejects.toMatchObject({
       name: "RequestError",
       message: "invalid card",
@@ -844,7 +844,7 @@ describe(`retry and error diagnostics should work correctly`, () => {
       Promise.resolve({ status: 500, text: () => Promise.resolve(JSON.stringify({ error: "server error" })) })
     ) as jest.Mock);
 
-    const processing = new FinteqHubProcessing({ apiUrl, fingerprintVisitorId, merchantId, sessionId, retryOptions: { retryCount: 2 } });
+    const processing = new FinteqHubProcessing(apiUrl, fingerprintVisitorId, merchantId, sessionId, false, { retryCount: 2 });
     await expect(processing.getSession()).rejects.toMatchObject({
       name: "RequestError",
       message: "server error",
@@ -874,12 +874,8 @@ describe(`retry and error diagnostics should work correctly`, () => {
         : Promise.resolve({ status: 200, text: () => Promise.resolve(JSON.stringify(session)) });
     }) as jest.Mock);
 
-    const processing = new FinteqHubProcessing({
-      apiUrl,
-      fingerprintVisitorId,
-      merchantId,
-      sessionId,
-      retryOptions: { retryStatusCode: (statusCode) => statusCode === 404 },
+    const processing = new FinteqHubProcessing(apiUrl, fingerprintVisitorId, merchantId, sessionId, false, {
+      retryStatusCode: (statusCode) => statusCode === 404,
     });
     const res = await processing.getSession();
 
@@ -893,12 +889,8 @@ describe(`retry and error diagnostics should work correctly`, () => {
       Promise.resolve({ status: 500, text: () => Promise.resolve(JSON.stringify({ error: "server error" })) })
     ) as jest.Mock);
 
-    const processing = new FinteqHubProcessing({
-      apiUrl,
-      fingerprintVisitorId,
-      merchantId,
-      sessionId,
-      retryOptions: { retryStatusCode: (statusCode) => statusCode === 404 },
+    const processing = new FinteqHubProcessing(apiUrl, fingerprintVisitorId, merchantId, sessionId, false, {
+      retryStatusCode: (statusCode) => statusCode === 404,
     });
 
     // 500 is retryable by default, but the custom predicate does not include it
@@ -920,7 +912,7 @@ describe(`retry and error diagnostics should work correctly`, () => {
         : Promise.resolve({ status: 200, text: () => Promise.resolve(JSON.stringify(session)) });
     }) as jest.Mock);
 
-    const processing = new FinteqHubProcessing({ apiUrl, fingerprintVisitorId, merchantId, sessionId });
+    const processing = new FinteqHubProcessing(apiUrl, fingerprintVisitorId, merchantId, sessionId);
     const res = await processing.getSession();
 
     expect(res).toEqual(session);
@@ -937,7 +929,7 @@ describe(`retry and error diagnostics should work correctly`, () => {
         : Promise.resolve({ status: 200, text: () => Promise.resolve(JSON.stringify(session)) });
     }) as jest.Mock);
 
-    const processing = new FinteqHubProcessing({ apiUrl, fingerprintVisitorId, merchantId, sessionId });
+    const processing = new FinteqHubProcessing(apiUrl, fingerprintVisitorId, merchantId, sessionId);
     const res = await processing.getSession();
 
     expect(res).toEqual(session);
@@ -950,7 +942,7 @@ describe(`retry and error diagnostics should work correctly`, () => {
       Promise.resolve({ status: 200, text: () => Promise.reject(new TypeError("network error")) })
     ) as jest.Mock);
 
-    const processing = new FinteqHubProcessing({ apiUrl, fingerprintVisitorId, merchantId, sessionId, retryOptions: { retryCount: 1 } });
+    const processing = new FinteqHubProcessing(apiUrl, fingerprintVisitorId, merchantId, sessionId, false, { retryCount: 1 });
 
     await expect(processing.getSession()).rejects.toMatchObject({
       name: "RequestError",
@@ -977,7 +969,7 @@ describe(`retry and error diagnostics should work correctly`, () => {
   test(`rejects with diagnostics and logs console.error when network retries are exhausted`, async () => {
     const fetchFn = (window.fetch = jest.fn(() => Promise.reject(new TypeError("Failed to fetch"))) as jest.Mock);
 
-    const processing = new FinteqHubProcessing({ apiUrl, fingerprintVisitorId, merchantId, sessionId, retryOptions: { retryCount: 1 } });
+    const processing = new FinteqHubProcessing(apiUrl, fingerprintVisitorId, merchantId, sessionId, false, { retryCount: 1 });
 
     await expect(processing.getSession()).rejects.toMatchObject({
       name: "RequestError",
@@ -1018,7 +1010,7 @@ describe(`retry and error diagnostics should work correctly`, () => {
   test(`logs console.error with diagnostics even when retries are disabled`, async () => {
     const fetchFn = (window.fetch = jest.fn(() => Promise.reject(new TypeError("Failed to fetch"))) as jest.Mock);
 
-    const processing = new FinteqHubProcessing({ apiUrl, fingerprintVisitorId, merchantId, sessionId, retryOptions: { retryCount: 0 } });
+    const processing = new FinteqHubProcessing(apiUrl, fingerprintVisitorId, merchantId, sessionId, false, { retryCount: 0 });
 
     await expect(processing.getSession()).rejects.toBeInstanceOf(RequestError);
 
@@ -1030,7 +1022,7 @@ describe(`retry and error diagnostics should work correctly`, () => {
   test(`submitForm rejects with diagnostics when network retries are exhausted`, async () => {
     const fetchFn = (window.fetch = jest.fn(() => Promise.reject(new TypeError("Failed to fetch"))) as jest.Mock);
 
-    const processing = new FinteqHubProcessing({ apiUrl, fingerprintVisitorId, merchantId, sessionId, retryOptions: { retryCount: 0 } });
+    const processing = new FinteqHubProcessing(apiUrl, fingerprintVisitorId, merchantId, sessionId, false, { retryCount: 0 });
 
     await expect(processing.submitForm({} as SubmitData)).rejects.toMatchObject({
       name: "RequestError",
@@ -1053,7 +1045,7 @@ describe(`retry and error diagnostics should work correctly`, () => {
       Promise.resolve({ status: 502, text: () => Promise.resolve("<html>502 Bad Gateway, ray 1234567890</html>") })
     ) as jest.Mock;
 
-    const processing = new FinteqHubProcessing({ apiUrl, fingerprintVisitorId, merchantId, sessionId, retryOptions: { retryCount: 0 } });
+    const processing = new FinteqHubProcessing(apiUrl, fingerprintVisitorId, merchantId, sessionId, false, { retryCount: 0 });
 
     await expect(processing.getSession()).rejects.toMatchObject({
       name: "RequestError",
@@ -1073,7 +1065,7 @@ describe(`retry and error diagnostics should work correctly`, () => {
       Promise.resolve({ status: 200, text: () => Promise.resolve("<html>secret-session-token</html>") })
     ) as jest.Mock;
 
-    const processing = new FinteqHubProcessing({ apiUrl, fingerprintVisitorId, merchantId, sessionId, retryOptions: { retryCount: 0 } });
+    const processing = new FinteqHubProcessing(apiUrl, fingerprintVisitorId, merchantId, sessionId, false, { retryCount: 0 });
 
     const err = await processing.getSession().catch((e) => e);
     expect(err).toBeInstanceOf(RequestError);
@@ -1087,7 +1079,7 @@ describe(`retry and error diagnostics should work correctly`, () => {
   test(`uses a fallback message when the error response body has no error field`, async () => {
     window.fetch = jest.fn(() => Promise.resolve({ status: 503, text: () => Promise.resolve("{}") })) as jest.Mock;
 
-    const processing = new FinteqHubProcessing({ apiUrl, fingerprintVisitorId, merchantId, sessionId, retryOptions: { retryCount: 0 } });
+    const processing = new FinteqHubProcessing(apiUrl, fingerprintVisitorId, merchantId, sessionId, false, { retryCount: 0 });
 
     await expect(processing.getSession()).rejects.toMatchObject({
       name: "RequestError",
@@ -1101,7 +1093,7 @@ describe(`retry and error diagnostics should work correctly`, () => {
       Promise.resolve({ status: 200, text: () => Promise.resolve(JSON.stringify({ error: "insufficient funds" })) })
     ) as jest.Mock);
 
-    const processing = new FinteqHubProcessing({ apiUrl, fingerprintVisitorId, merchantId, sessionId });
+    const processing = new FinteqHubProcessing(apiUrl, fingerprintVisitorId, merchantId, sessionId);
 
     const err = await processing.getSession().catch((e) => e);
     expect(err).toBeInstanceOf(RequestError);
@@ -1114,10 +1106,4 @@ describe(`retry and error diagnostics should work correctly`, () => {
     expect(fetchFn).toHaveBeenCalledTimes(1);
     expect(warnSpy).not.toHaveBeenCalled();
   });
-});
-
-test(`constructor validates options and rejects positional arguments`, () => {
-  expect(() => new FinteqHubProcessing("api-url" as unknown as ProcessingOptions)).toThrow(
-    "sdk-js: constructor expects an options object"
-  );
 });

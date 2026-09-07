@@ -4,7 +4,7 @@ import {
   SessionResponse,
   SubmitData,
 } from "./typings";
-import { getDeviceData, uuid, validateOptions } from "./utils";
+import { getDeviceData, uuid } from "./utils";
 import { SDK_HEADER_NAME, SDK_HEADER_VALUE, SDK_VERSION } from "./version";
 
 type ResolveSubmitForm = (result: ProcessOperationRedirectResponse) => void;
@@ -20,15 +20,6 @@ type RequestOptions = {
 export interface RetryOptions {
   retryCount?: number;
   retryStatusCode?: (statusCode: number) => boolean;
-}
-
-export interface ProcessingOptions {
-  apiUrl: string;
-  fingerprintVisitorId: string;
-  merchantId: string;
-  sessionId: string;
-  isSecure?: boolean;
-  retryOptions?: RetryOptions;
 }
 
 export type RequestAttempt = {
@@ -105,15 +96,20 @@ export class FinteqHubProcessing {
   private isSecure: boolean;
   private retryOptions: RetryOptions;
 
-  constructor(options: ProcessingOptions) {
-    validateOptions(options);
-
-    this.apiUrl = options.apiUrl;
-    this.fingerprintVisitorId = options.fingerprintVisitorId;
-    this.merchantId = options.merchantId;
-    this.sessionId = options.sessionId;
-    this.isSecure = options.isSecure ?? false;
-    this.retryOptions = options.retryOptions ?? {};
+  constructor(
+    apiUrl: string,
+    fingerprintVisitorId: string,
+    merchantId: string,
+    sessionId: string,
+    isSecure: boolean = false,
+    retryOptions: RetryOptions = {}
+  ) {
+    this.apiUrl = apiUrl;
+    this.fingerprintVisitorId = fingerprintVisitorId;
+    this.merchantId = merchantId;
+    this.sessionId = sessionId;
+    this.isSecure = isSecure;
+    this.retryOptions = retryOptions;
   }
 
   public getSession() {

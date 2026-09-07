@@ -1,34 +1,24 @@
 # processing-sdk
 
-Use `new FinteqHubProcessing(options: ProcessingOptions)` to create an instance of the FinteqHubProcessing object. The FinteqHubProcessing object is your entrypoint to FinteqHub processing SDK.
+Use `new FinteqHubProcessing(apiUrl: string, fingerprintVisitorId: string, merchantId: string, sessionId: string, isSecure?: boolean, retryOptions?: RetryOptions)` to create an instance of the FinteqHubProcessing object. The FinteqHubProcessing object is your entrypoint to FinteqHub processing SDK.
 
 ```
-interface ProcessingOptions {
-  apiUrl: string;
-  fingerprintVisitorId: string;
-  merchantId: string;
-  sessionId: string;
-  isSecure?: boolean; // default false
-  retryOptions?: RetryOptions;
-}
-
-const processing = new FinteqHubProcessing({
-  apiUrl: 'api-url',
-  fingerprintVisitorId: 'fingerprint-visitor-id',
-  merchantId: 'merchant-id',
-  sessionId: 'session-id',
-});
+const processing = new FinteqHubProcessing('api-url', 'fingerprint-visitor-id', 'merchant-id', 'session-id');
 ```
 
 ## Retries and error diagnostics
 
-Failed HTTP requests are retried automatically with exponential backoff (`100ms → 200ms → 500ms → 1000ms → 2000ms`; every retry after the fifth waits 2000ms). Retries can be configured via the `retryOptions` constructor option:
+Failed HTTP requests are retried automatically with exponential backoff (`100ms → 200ms → 500ms → 1000ms → 2000ms`; every retry after the fifth waits 2000ms). Retries can be configured via the optional `retryOptions` constructor argument (the sixth one, after `isSecure`):
 
 ```
 interface RetryOptions {
   retryCount?: number; // number of retries after the initial attempt, default 5; 0 disables retries
   retryStatusCode?: (statusCode: number) => boolean; // default: statusCode < 200 || statusCode === 408 || statusCode >= 500
 }
+
+const processing = new FinteqHubProcessing('api-url', 'fingerprint-visitor-id', 'merchant-id', 'session-id', false, {
+  retryCount: 3,
+});
 ```
 
 Network errors (the browser could not reach the server at all, e.g. `TypeError: Failed to fetch`, or the connection dropped while the response body was being read) are always retried too.
@@ -94,7 +84,7 @@ import FingerprintJS from "@fingerprintjs/fingerprintjs";
 const fp = await FingerprintJS.load();
 const result = await fp.get();
 
-const processing = new FinteqHubProcessing({ apiUrl, fingerprintVisitorId: result.visitorId, merchantId, sessionId });
+const processing = new FinteqHubProcessing(apiUrl, result.visitorId, merchantId, sessionId);
 const session = await processing.getSession();
 
 const data = {/** collect data from form and session **/}
