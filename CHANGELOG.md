@@ -6,6 +6,7 @@ Notable changes to `@finteqhub/sdk-js`. The format is based on [Keep a Changelog
 
 ### Breaking changes
 
+- The constructor validates its arguments and throws a `TypeError` when `apiUrl`, `fingerprintVisitorId`, `merchantId` or `sessionId` is missing, empty or not a string, when `isSecure` is not a boolean, or when `retryOptions` is malformed (not an object, `retryCount` not a non-negative integer, `retryStatusCode` not a function). Previously invalid arguments were accepted silently.
 - Failed requests now reject with a `RequestError` (subclass of `Error`) instead of a plain `Error`. Existing `catch` blocks keep working, but error messages changed for some failure classes:
   - network failures reject with `request to <url> failed after N attempt(s): <reason>` (previously the raw `fetch` error, e.g. `Failed to fetch`);
   - non-200 responses without an `error` field in the body reject with `unexpected response status <code>` (previously the message was empty);

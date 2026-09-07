@@ -1107,3 +1107,18 @@ describe(`retry and error diagnostics should work correctly`, () => {
     expect(warnSpy).not.toHaveBeenCalled();
   });
 });
+
+test(`constructor validates its arguments`, () => {
+  expect(() => new FinteqHubProcessing("", "fp", "merchant-id", "session-id")).toThrow(
+    "sdk-js: apiUrl must be a non-empty string"
+  );
+  expect(() => new FinteqHubProcessing("api-url", "fp", "merchant-id", undefined as unknown as string)).toThrow(
+    "sdk-js: sessionId must be a non-empty string"
+  );
+  expect(() => new FinteqHubProcessing("api-url", "fp", "merchant-id", "session-id", "yes" as unknown as boolean)).toThrow(
+    "sdk-js: isSecure must be a boolean"
+  );
+  expect(() => new FinteqHubProcessing("api-url", "fp", "merchant-id", "session-id", false, { retryCount: NaN })).toThrow(
+    "sdk-js: retryOptions.retryCount must be a non-negative integer"
+  );
+});

@@ -6,6 +6,8 @@ Use `new FinteqHubProcessing(apiUrl: string, fingerprintVisitorId: string, merch
 const processing = new FinteqHubProcessing('api-url', 'fingerprint-visitor-id', 'merchant-id', 'session-id');
 ```
 
+The constructor validates its arguments and throws a `TypeError` when `apiUrl`, `fingerprintVisitorId`, `merchantId` or `sessionId` is missing, empty or not a string, when `isSecure` is not a boolean, or when `retryOptions` is malformed (see [Retries and error diagnostics](#retries-and-error-diagnostics)).
+
 ## Retries and error diagnostics
 
 Failed HTTP requests are retried automatically with exponential backoff (`100ms → 200ms → 500ms → 1000ms → 2000ms`; every retry after the fifth waits 2000ms). Retries can be configured via the optional `retryOptions` constructor argument (the sixth one, after `isSecure`):
@@ -20,6 +22,8 @@ const processing = new FinteqHubProcessing('api-url', 'fingerprint-visitor-id', 
   retryCount: 3,
 });
 ```
+
+The constructor throws a `TypeError` when `retryOptions` is not an object, `retryCount` is not a non-negative integer, or `retryStatusCode` is not a function.
 
 Network errors (the browser could not reach the server at all, e.g. `TypeError: Failed to fetch`, or the connection dropped while the response body was being read) are always retried too.
 

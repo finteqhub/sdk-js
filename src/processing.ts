@@ -4,7 +4,7 @@ import {
   SessionResponse,
   SubmitData,
 } from "./typings";
-import { getDeviceData, uuid } from "./utils";
+import { getDeviceData, uuid, validateArguments } from "./utils";
 import { SDK_HEADER_NAME, SDK_HEADER_VALUE, SDK_VERSION } from "./version";
 
 type ResolveSubmitForm = (result: ProcessOperationRedirectResponse) => void;
@@ -104,6 +104,8 @@ export class FinteqHubProcessing {
     isSecure: boolean = false,
     retryOptions: RetryOptions = {}
   ) {
+    validateArguments({ apiUrl, fingerprintVisitorId, merchantId, sessionId, isSecure, retryOptions });
+
     this.apiUrl = apiUrl;
     this.fingerprintVisitorId = fingerprintVisitorId;
     this.merchantId = merchantId;

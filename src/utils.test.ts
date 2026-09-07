@@ -1,4 +1,4 @@
-import { uuid, getDeviceType, getDeviceData } from "./utils";
+import { uuid, getDeviceType, getDeviceData, validateArguments } from "./utils";
 
 test(`function ${uuid.name} should work correctly`, () => {
   Date.now = jest.fn(() => 1487076708000);
@@ -63,6 +63,64 @@ describe("getDeviceType", () => {
       "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.5938.62 Safari/537.36"
     );
     expect(getDeviceType()).toEqual("computer");
+  });
+});
+
+describe(`function ${validateArguments.name} should work correctly`, () => {
+  type Args = Parameters<typeof validateArguments>[0];
+  const args: Args = {
+    apiUrl: "api-url",
+    fingerprintVisitorId: "fingerprint-visitor-id",
+    merchantId: "merchant-id",
+    sessionId: "session-id",
+    isSecure: false,
+    retryOptions: {},
+  };
+
+  test.each(["apiUrl", "fingerprintVisitorId", "merchantId", "sessionId"] as const)(
+    "throws when %s is missing, empty or not a string",
+    (key) => {
+      for (const value of [undefined, "", 42]) {
+        expect(() => validateArguments({ ...args, [key]: value } as unknown as Args)).toThrow(
+          `sdk-js: ${key} must be a non-empty string`
+        );
+      }
+    }
+  );
+
+  test("throws when isSecure is not a boolean", () => {
+    for (const isSecure of ["yes", null, 1]) {
+      expect(() => validateArguments({ ...args, isSecure } as unknown as Args)).toThrow("sdk-js: isSecure must be a boolean");
+    }
+  });
+
+  test("throws when retryOptions is not an object", () => {
+    for (const retryOptions of [5, "retry", null]) {
+      expect(() => validateArguments({ ...args, retryOptions } as unknown as Args)).toThrow(
+        "sdk-js: retryOptions must be an object"
+      );
+    }
+  });
+
+  test("throws when retryCount is not a non-negative integer", () => {
+    for (const retryCount of [-1, 1.5, NaN, Infinity, "5"]) {
+      expect(() => validateArguments({ ...args, retryOptions: { retryCount } } as unknown as Args)).toThrow(
+        "sdk-js: retryOptions.retryCount must be a non-negative integer"
+      );
+    }
+  });
+
+  test("throws when retryStatusCode is not a function", () => {
+    expect(() => validateArguments({ ...args, retryOptions: { retryStatusCode: [500] } } as unknown as Args)).toThrow(
+      "sdk-js: retryOptions.retryStatusCode must be a function"
+    );
+  });
+
+  test("accepts valid arguments", () => {
+    expect(() => validateArguments(args)).not.toThrow();
+    expect(() =>
+      validateArguments({ ...args, isSecure: true, retryOptions: { retryCount: 0, retryStatusCode: () => false } })
+    ).not.toThrow();
   });
 });
 
