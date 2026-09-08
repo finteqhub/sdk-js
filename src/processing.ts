@@ -227,7 +227,7 @@ export class FinteqHubProcessing {
             ? sanitizeBody(e.message)
             : "parse error message omitted (200 response body may carry credentials)",
       };
-      throw this.responseError(
+      throw this.requestError(
         "invalid_json",
         `request to ${url} returned invalid JSON (status ${response.status})`,
         url, options, attempts, { status: response.status, body }, parseError
@@ -235,7 +235,7 @@ export class FinteqHubProcessing {
     }
 
     if (result?.error || response.status !== 200) {
-      throw this.responseError(
+      throw this.requestError(
         "http_error",
         result?.error || `unexpected response status ${response.status}`,
         url, options, attempts, { status: response.status, body, error: result?.error }
@@ -267,12 +267,11 @@ export class FinteqHubProcessing {
         attempts.push({ durationMs: Date.now() - startedAt, status: response?.status, error: e.message });
 
         if (attempt > retryCount) {
-          const message = `request to ${url} failed after ${attempt} attempt(s): ${e.message}`;
-          const diagnostics = this.collectDiagnostics(
-            "network", url, options, attempts, e, response ? { status: response.status } : undefined
+          throw this.requestError(
+            "network",
+            `request to ${url} failed after ${attempt} attempt(s): ${e.message}`,
+            url, options, attempts, response ? { status: response.status } : undefined, e
           );
-          console.error(`sdk-js: request failed: ${message}`, diagnostics);
-          throw new RequestError(message, diagnostics);
         }
         reason = e.message;
       }
@@ -294,7 +293,7 @@ export class FinteqHubProcessing {
     }
   }
 
-  private responseError(
+  private requestError(
     kind: RequestDiagnostics["kind"],
     message: string,
     url: string,
