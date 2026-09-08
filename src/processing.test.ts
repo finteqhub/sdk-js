@@ -1060,6 +1060,19 @@ describe(`retry and error diagnostics should work correctly`, () => {
     expect(errorSpy).toHaveBeenCalledTimes(1);
   });
 
+  test(`truncates the body snippet of an error response to 500 characters`, async () => {
+    const body = JSON.stringify({ error: "server error", details: "x".repeat(600) });
+    window.fetch = jest.fn(() => Promise.resolve({ status: 500, text: () => Promise.resolve(body) })) as jest.Mock;
+
+    const processing = new FinteqHubProcessing(apiUrl, fingerprintVisitorId, merchantId, sessionId, false, { retryCount: 0 });
+
+    await expect(processing.getSession()).rejects.toMatchObject({
+      name: "RequestError",
+      message: "server error",
+      diagnostics: { kind: "http_error", response: { status: 500, body: body.slice(0, 500), error: "server error" } },
+    });
+  });
+
   test(`parse error details of a 200 response are not leaked into diagnostics`, async () => {
     window.fetch = jest.fn(() =>
       Promise.resolve({ status: 200, text: () => Promise.resolve("<html>secret-session-token</html>") })
