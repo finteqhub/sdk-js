@@ -1,3 +1,5 @@
+import type { RetryOptions } from "./processing";
+
 export const DeviceType = {
   Unknown: "unknown",
   Computer: "computer",
@@ -52,6 +54,39 @@ export function getDeviceType() {
   }
 
   return DeviceType.Unknown;
+}
+
+type ConstructorArguments = {
+  apiUrl: string;
+  fingerprintVisitorId: string;
+  merchantId: string;
+  sessionId: string;
+  isSecure: boolean;
+  retryOptions: RetryOptions;
+};
+
+const REQUIRED_STRINGS = ["apiUrl", "fingerprintVisitorId", "merchantId", "sessionId"] as const;
+
+export function validateArguments(args: ConstructorArguments) {
+  for (const key of REQUIRED_STRINGS) {
+    if (typeof args[key] !== "string" || args[key] === "") {
+      throw new TypeError(`sdk-js: ${key} must be a non-empty string`);
+    }
+  }
+  if (typeof args.isSecure !== "boolean") {
+    throw new TypeError("sdk-js: isSecure must be a boolean");
+  }
+  const { retryOptions } = args;
+  if (typeof retryOptions !== "object" || retryOptions === null) {
+    throw new TypeError("sdk-js: retryOptions must be an object");
+  }
+  const { retryCount, retryStatusCode } = retryOptions;
+  if (retryCount !== undefined && (!Number.isInteger(retryCount) || retryCount < 0)) {
+    throw new TypeError("sdk-js: retryOptions.retryCount must be a non-negative integer");
+  }
+  if (retryStatusCode !== undefined && typeof retryStatusCode !== "function") {
+    throw new TypeError("sdk-js: retryOptions.retryStatusCode must be a function");
+  }
 }
 
 export function getDeviceData() {
