@@ -23,6 +23,14 @@ const processing = new FinteqHubProcessing('api-url', 'fingerprint-visitor-id', 
 });
 ```
 
+To disable retries entirely, pass `retryCount: 0` — every request is then sent exactly once, as in 0.11.0. Error diagnostics (`RequestError`, the `console.error` dump) are still collected:
+
+```
+const processing = new FinteqHubProcessing('api-url', 'fingerprint-visitor-id', 'merchant-id', 'session-id', false, {
+  retryCount: 0,
+});
+```
+
 The constructor throws a `TypeError` when `retryOptions` is not an object, `retryCount` is not a non-negative integer, or `retryStatusCode` is not a function.
 
 Network errors (the browser could not reach the server at all, e.g. `TypeError: Failed to fetch`, or the connection dropped while the response body was being read) are always retried too.

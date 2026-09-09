@@ -14,6 +14,8 @@ Notable changes to `@finteqhub/sdk-js`. The format is based on [Keep a Changelog
 
   Code that matches on `error.message` for these cases needs updating; code that only reads `error.message` for display keeps working.
 
+- To keep the 0.11.0 behaviour of a single request per call, pass `{ retryCount: 0 }` as the sixth constructor argument. The `RequestError` type, the changed error messages and the `console.error` dump apply regardless of whether retries are enabled.
+
 ### Added
 
 - Failed HTTP requests are retried automatically with exponential backoff (`100ms → 200ms → 500ms → 1000ms → 2000ms`), 5 retries by default. Network errors are always retried; responses are retried when the status is `< 200`, `408`, or `>= 500` (400 is not retried: the API returns it for deterministic validation failures and duplicate-submit rejections). Configurable via the new optional `retryOptions` constructor argument (`retryCount`, `retryStatusCode`), passed after `isSecure` — see the README for details.
