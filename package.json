@@ -1,13 +1,22 @@
 {
   "name": "@finteqhub/sdk-js",
-  "version": "0.13.0",
+  "version": "0.13.1",
   "description": "SDK for interacting with FinteqHub processing API",
   "main": "./dist/index.js",
   "typings": "./dist/index.d.ts",
   "files": [
-    "dist/*"
+    "dist/*",
+    "CHANGELOG.md"
   ],
   "author": "FinteqHub",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/finteqhub/sdk-js.git"
+  },
+  "homepage": "https://github.com/finteqhub/sdk-js#readme",
+  "bugs": {
+    "url": "https://github.com/finteqhub/sdk-js/issues"
+  },
   "devDependencies": {
     "@types/jest": "^29.1.1",
     "jest": "^29.1.2",

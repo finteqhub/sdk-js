@@ -2,6 +2,15 @@
 
 Notable changes to `@finteqhub/sdk-js`. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## 0.13.1
+
+### Changed
+
+- `CHANGELOG.md` is now included in the published npm package (previously only `dist/` and `README.md` shipped).
+- Added `repository`, `homepage` and `bugs` fields to `package.json`, so the npm page links to the GitHub repository, relative links in the README resolve there, and dependency bots can find the release notes.
+
+No code changes: the SDK behaves exactly as in 0.13.0 (only the version reported in the `x-pgw-sdk` header differs).
+
 ## 0.13.0
 
 ### Breaking changes
