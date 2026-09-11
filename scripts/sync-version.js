@@ -1,5 +1,5 @@
 // Syncs SDK_VERSION in src/version.ts with the version from package.json,
-// so the X-PGW-SDK header reports the published version (see src/version.test.ts).
+// so the x-pgw-sdk header reports the published version (see src/version.test.ts).
 const fs = require("fs");
 const path = require("path");
 const pkg = require("../package.json");
