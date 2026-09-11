@@ -2,6 +2,12 @@
 
 Notable changes to `@finteqhub/sdk-js`. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## 0.13.0
+
+### Breaking changes
+
+- The SDK identification header sent with every request was renamed from `X-Finteqhub-SDK` to `X-PGW-SDK`. The value format (`sdk-js/<version>`) is unchanged.
+
 ## 0.12.0
 
 ### Breaking changes

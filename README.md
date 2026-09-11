@@ -56,7 +56,7 @@ Diagnostics are collected regardless of whether retries are enabled.
 Every request the SDK makes carries an extra header:
 
 ```
-X-Finteqhub-SDK: sdk-js/<version>
+X-PGW-SDK: sdk-js/<version>
 ```
 
 The value contains the SDK name and version (kept in sync with `package.json` by a test) — for example `sdk-js/0.11.0`. FinteqHub uses this header to identify traffic coming from the official SDK integration — for example to notify affected merchants when a security fix is released. It does not affect authentication or request routing.
@@ -109,7 +109,7 @@ processing
 
 ## Releasing
 
-On every version bump update **both** `package.json` `version` and `SDK_VERSION` in `src/version.ts` — they must stay in sync so the `X-Finteqhub-SDK` header reports the right version. `src/version.test.ts` fails CI if they drift (`node scripts/sync-version.js` updates `src/version.ts` from `package.json`). Describe the release in [CHANGELOG.md](CHANGELOG.md), including migration notes for breaking changes.
+On every version bump update **both** `package.json` `version` and `SDK_VERSION` in `src/version.ts` — they must stay in sync so the `X-PGW-SDK` header reports the right version. `src/version.test.ts` fails CI if they drift (`node scripts/sync-version.js` updates `src/version.ts` from `package.json`). Describe the release in [CHANGELOG.md](CHANGELOG.md), including migration notes for breaking changes.
 
 ### Beta releases
 
