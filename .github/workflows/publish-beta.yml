@@ -17,8 +17,7 @@ jobs:
       - run: npm ci
       - name: Set beta version
         run: |
-          BASE_VERSION=$(node -p "require('./package.json').version")
-          BETA_VERSION="${BASE_VERSION}-beta.${GITHUB_RUN_NUMBER}"
+          BETA_VERSION=$(node scripts/next-beta-version.js)
           npm version "$BETA_VERSION" --no-git-tag-version
           node scripts/sync-version.js
           echo "BETA_VERSION=$BETA_VERSION" >> "$GITHUB_ENV"
