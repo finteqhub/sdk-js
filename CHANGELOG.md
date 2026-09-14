@@ -2,6 +2,14 @@
 
 Notable changes to `@finteqhub/sdk-js`. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## 0.14.0
+
+### Breaking changes
+
+- `transactionType` was removed from the `SubmitData` type. It was declared on two of the three variants (the saved-card variant with `customerAccountId` and the generic `Record<string, string>` one) but never read by the SDK: `submitForm` spreads the data straight into the request body. TypeScript callers that pass `transactionType` in an object literal now hit the excess property check and need to drop it; JavaScript callers are unaffected, since the spread still forwards whatever the caller supplies.
+
+`transactionType` is unchanged on `OperationSession`, where the API returns it as part of the session. `TxType` is also unchanged: it is unused inside the SDK, but it is re-exported from the package root and stays part of the public API.
+
 ## 0.13.1
 
 ### Changed

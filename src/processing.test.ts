@@ -3,7 +3,6 @@ import "whatwg-fetch";
 import { FinteqHubProcessing, RequestError } from "./processing";
 import { SubmitData } from "./typings";
 import { getDeviceData } from "./utils";
-import { TxType } from "./consts";
 import { SDK_HEADER_NAME, SDK_HEADER_VALUE, SDK_VERSION } from "./version";
 
 let warnSpy: jest.SpyInstance;
@@ -227,7 +226,6 @@ describe(`function ${FinteqHubProcessing.prototype.submitForm.name} should work 
       },
     },
     paymentMethod: "card-acquirer",
-    transactionType: TxType.Deposit,
   };
 
   const headers = {
@@ -490,7 +488,6 @@ describe(`function ${FinteqHubProcessing.prototype.submitForm.name} with secure 
       },
     },
     paymentMethod: "card-acquirer",
-    transactionType: TxType.Deposit,
   };
 
   const headers = {
