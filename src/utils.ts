@@ -119,7 +119,7 @@ export async function getClientHints(): Promise<Record<string, string>> {
     try {
       highEntropy = await uaData.getHighEntropyValues(HIGH_ENTROPY_HINTS);
     } catch {
-      highEntropy = {};
+      return {};
     }
   }
 
