@@ -1,4 +1,4 @@
-import { uuid, getDeviceType, getDeviceData, getClientHints } from "./utils";
+import { uuid, getDeviceType, getDeviceData, getClientHints, validateArguments } from "./utils";
 
 test(`function ${uuid.name} should work correctly`, () => {
   Date.now = jest.fn(() => 1487076708000);
@@ -66,6 +66,64 @@ describe("getDeviceType", () => {
   });
 });
 
+describe(`function ${validateArguments.name} should work correctly`, () => {
+  type Args = Parameters<typeof validateArguments>[0];
+  const args: Args = {
+    apiUrl: "api-url",
+    fingerprintVisitorId: "fingerprint-visitor-id",
+    merchantId: "merchant-id",
+    sessionId: "session-id",
+    isSecure: false,
+    retryOptions: {},
+  };
+
+  test.each(["apiUrl", "fingerprintVisitorId", "merchantId", "sessionId"] as const)(
+    "throws when %s is missing, empty or not a string",
+    (key) => {
+      for (const value of [undefined, "", 42]) {
+        expect(() => validateArguments({ ...args, [key]: value } as unknown as Args)).toThrow(
+          `sdk-js: ${key} must be a non-empty string`
+        );
+      }
+    }
+  );
+
+  test("throws when isSecure is not a boolean", () => {
+    for (const isSecure of ["yes", null, 1]) {
+      expect(() => validateArguments({ ...args, isSecure } as unknown as Args)).toThrow("sdk-js: isSecure must be a boolean");
+    }
+  });
+
+  test("throws when retryOptions is not an object", () => {
+    for (const retryOptions of [5, "retry", null]) {
+      expect(() => validateArguments({ ...args, retryOptions } as unknown as Args)).toThrow(
+        "sdk-js: retryOptions must be an object"
+      );
+    }
+  });
+
+  test("throws when retryCount is not a non-negative integer", () => {
+    for (const retryCount of [-1, 1.5, NaN, Infinity, "5"]) {
+      expect(() => validateArguments({ ...args, retryOptions: { retryCount } } as unknown as Args)).toThrow(
+        "sdk-js: retryOptions.retryCount must be a non-negative integer"
+      );
+    }
+  });
+
+  test("throws when retryStatusCode is not a function", () => {
+    expect(() => validateArguments({ ...args, retryOptions: { retryStatusCode: [500] } } as unknown as Args)).toThrow(
+      "sdk-js: retryOptions.retryStatusCode must be a function"
+    );
+  });
+
+  test("accepts valid arguments", () => {
+    expect(() => validateArguments(args)).not.toThrow();
+    expect(() =>
+      validateArguments({ ...args, isSecure: true, retryOptions: { retryCount: 0, retryStatusCode: () => false } })
+    ).not.toThrow();
+  });
+});
+
 test(`function ${getDeviceData.name} should work correctly`, async () => {
   Object.defineProperty(window, "innerWidth", {
     value: 411,
@@ -75,7 +133,13 @@ test(`function ${getDeviceData.name} should work correctly`, async () => {
       platform: "mock-platform",
       mobile: true,
       brands: [{ brand: "Chromium", version: "130" }],
-      getHighEntropyValues: () => Promise.resolve({ model: "SM-G991B", platformVersion: "13.0.0" }),
+      getHighEntropyValues: () => Promise.resolve({
+        brands: [{ brand: "Chromium", version: "130" }],
+        mobile: true,
+        platform: "mock-platform",
+        model: "SM-G991B",
+        platformVersion: "13.0.0",
+      }),
     },
     configurable: true,
   });
@@ -134,11 +198,11 @@ test(`function ${getDeviceData.name} should work correctly`, async () => {
         userAgent:
           "Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.0 Mobile/15E148 Safari/604.1",
         clientHints: {
-          "Sec-CH-UA": '"Chromium";v="130"',
-          "Sec-CH-UA-Mobile": "?1",
-          "Sec-CH-UA-Model": "SM-G991B",
-          "Sec-CH-UA-Platform": "mock-platform",
-          "Sec-CH-UA-Platform-Version": "13.0.0",
+          brands: [{ brand: "Chromium", version: "130" }],
+          mobile: true,
+          model: "SM-G991B",
+          platform: "mock-platform",
+          platformVersion: "13.0.0",
         },
         javaEnabled: false,
         javaScriptEnabled: true,
@@ -157,58 +221,86 @@ test(`function ${getDeviceData.name} should work correctly`, async () => {
   });
 });
 
+test(`${getDeviceData.name} omits clientHints without the API`, async () => {
+  Object.defineProperty(navigator, "userAgentData", { value: undefined, configurable: true });
+
+  expect(await getDeviceData()).not.toHaveProperty("device.browser.clientHints");
+});
+
 describe("getClientHints", () => {
+  const originalUserAgentData = Object.getOwnPropertyDescriptor(navigator, "userAgentData");
   const mockUserAgentData = (value: unknown) =>
     Object.defineProperty(navigator, "userAgentData", { value, configurable: true });
 
-  test("returns every hint the browser exposes, keyed by header name", async () => {
+  afterEach(() => {
+    if (originalUserAgentData) {
+      Object.defineProperty(navigator, "userAgentData", originalUserAgentData);
+    } else {
+      delete (navigator as Navigator & { userAgentData?: unknown }).userAgentData;
+    }
+  });
+
+  test("returns the browser's native hints without changing keys or values", async () => {
+    const getHighEntropyValues = jest.fn(async () => ({
+      brands: [{ brand: "Not?A_Brand", version: "99" }],
+      mobile: false,
+      platform: "Android",
+      architecture: "arm",
+      bitness: "64",
+      formFactors: ["Mobile"],
+      fullVersionList: [
+        { brand: "Chromium", version: "130.0.0.0" },
+        { brand: "Not?A_Brand", version: "99.0.0.0" },
+      ],
+      model: "Pixel 3 XL",
+      platformVersion: "13.0.0",
+      uaFullVersion: "130.0.6723.58",
+      wow64: false,
+    }));
     mockUserAgentData({
       brands: [{ brand: "Not?A_Brand", version: "99" }],
       mobile: false,
       platform: "Android",
-      getHighEntropyValues: () =>
-        Promise.resolve({
-          architecture: "arm",
-          bitness: "64",
-          formFactors: ["Mobile"],
-          fullVersionList: [
-            { brand: "Chromium", version: "130.0.0.0" },
-            { brand: "Not?A_Brand", version: "99.0.0.0" },
-          ],
-          model: "Pixel 3 XL",
-          platformVersion: "13.0.0",
-          uaFullVersion: "130.0.6723.58",
-          wow64: false,
-        }),
+      getHighEntropyValues,
     });
 
     expect(await getClientHints()).toEqual({
-      "Sec-CH-UA": '"Not?A_Brand";v="99"',
-      "Sec-CH-UA-Arch": "arm",
-      "Sec-CH-UA-Bitness": "64",
-      "Sec-CH-UA-Form-Factors": '"Mobile"',
-      "Sec-CH-UA-Full-Version": "130.0.6723.58",
-      "Sec-CH-UA-Full-Version-List": '"Chromium";v="130.0.0.0", "Not?A_Brand";v="99.0.0.0"',
-      "Sec-CH-UA-Mobile": "?0",
-      "Sec-CH-UA-Model": "Pixel 3 XL",
-      "Sec-CH-UA-Platform": "Android",
-      "Sec-CH-UA-Platform-Version": "13.0.0",
-      "Sec-CH-UA-WoW64": "?0",
+      brands: [{ brand: "Not?A_Brand", version: "99" }],
+      mobile: false,
+      platform: "Android",
+      architecture: "arm",
+      bitness: "64",
+      formFactors: ["Mobile"],
+      fullVersionList: [
+        { brand: "Chromium", version: "130.0.0.0" },
+        { brand: "Not?A_Brand", version: "99.0.0.0" },
+      ],
+      model: "Pixel 3 XL",
+      platformVersion: "13.0.0",
+      uaFullVersion: "130.0.6723.58",
+      wow64: false,
     });
+    expect(getHighEntropyValues).toHaveBeenCalledWith([
+      "architecture", "bitness", "formFactors", "fullVersionList",
+      "model", "platformVersion", "uaFullVersion", "wow64",
+    ]);
   });
 
-  test("falls back to low entropy hints when high entropy values are denied", async () => {
+  test.each([
+    ["unavailable", undefined],
+    ["denied", () => Promise.reject(new Error("NotAllowedError"))],
+  ])("falls back to low entropy hints when high entropy values are %s", async (_, getHighEntropyValues) => {
     mockUserAgentData({
       brands: [{ brand: "Chromium", version: "130" }],
       mobile: true,
       platform: "Android",
-      getHighEntropyValues: () => Promise.reject(new Error("NotAllowedError")),
+      getHighEntropyValues,
     });
 
     expect(await getClientHints()).toEqual({
-      "Sec-CH-UA": '"Chromium";v="130"',
-      "Sec-CH-UA-Mobile": "?1",
-      "Sec-CH-UA-Platform": "Android",
+      brands: [{ brand: "Chromium", version: "130" }],
+      mobile: true,
+      platform: "Android",
     });
   });
 
@@ -218,12 +310,24 @@ describe("getClientHints", () => {
     expect(await getClientHints()).toEqual({});
   });
 
-  test("omits hints the browser does not expose", async () => {
+  test("preserves an empty model and only the hints returned by the browser", async () => {
     mockUserAgentData({
+      brands: [{ brand: "Chromium", version: "130" }],
+      mobile: false,
       platform: "macOS",
-      getHighEntropyValues: () => Promise.resolve({ model: "" }),
+      getHighEntropyValues: () => Promise.resolve({
+        brands: [{ brand: "Chromium", version: "130" }],
+        mobile: false,
+        platform: "macOS",
+        model: "",
+      }),
     });
 
-    expect(await getClientHints()).toEqual({ "Sec-CH-UA-Platform": "macOS" });
+    expect(await getClientHints()).toEqual({
+      brands: [{ brand: "Chromium", version: "130" }],
+      mobile: false,
+      platform: "macOS",
+      model: "",
+    });
   });
 });

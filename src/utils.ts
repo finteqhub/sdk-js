@@ -1,3 +1,5 @@
+import type { RetryOptions } from "./processing";
+
 export const DeviceType = {
   Unknown: "unknown",
   Computer: "computer",
@@ -54,6 +56,39 @@ export function getDeviceType() {
   return DeviceType.Unknown;
 }
 
+type ConstructorArguments = {
+  apiUrl: string;
+  fingerprintVisitorId: string;
+  merchantId: string;
+  sessionId: string;
+  isSecure: boolean;
+  retryOptions: RetryOptions;
+};
+
+const REQUIRED_STRINGS = ["apiUrl", "fingerprintVisitorId", "merchantId", "sessionId"] as const;
+
+export function validateArguments(args: ConstructorArguments) {
+  for (const key of REQUIRED_STRINGS) {
+    if (typeof args[key] !== "string" || args[key] === "") {
+      throw new TypeError(`sdk-js: ${key} must be a non-empty string`);
+    }
+  }
+  if (typeof args.isSecure !== "boolean") {
+    throw new TypeError("sdk-js: isSecure must be a boolean");
+  }
+  const { retryOptions } = args;
+  if (typeof retryOptions !== "object" || retryOptions === null) {
+    throw new TypeError("sdk-js: retryOptions must be an object");
+  }
+  const { retryCount, retryStatusCode } = retryOptions;
+  if (retryCount !== undefined && (!Number.isInteger(retryCount) || retryCount < 0)) {
+    throw new TypeError("sdk-js: retryOptions.retryCount must be a non-negative integer");
+  }
+  if (retryStatusCode !== undefined && typeof retryStatusCode !== "function") {
+    throw new TypeError("sdk-js: retryOptions.retryStatusCode must be a function");
+  }
+}
+
 // The User-Agent Client Hints API is Chromium-only and is not in TypeScript's DOM types yet.
 type NavigatorUAData = {
   brands?: { brand: string; version: string }[];
@@ -89,61 +124,19 @@ function userAgentData(): NavigatorUAData | undefined {
   return (navigator as Navigator & { userAgentData?: NavigatorUAData }).userAgentData;
 }
 
-// Values are serialized the way the browser would send them in the matching Sec-CH-UA-* header:
-// booleans as ?1/?0 and lists as quoted structured-header entries. Plain strings are sent as is.
-function brandList(brands?: { brand: string; version: string }[]) {
-  return brands?.map(({ brand, version }) => `"${brand}";v="${version}"`).join(", ");
-}
-
-function boolHint(value?: boolean) {
-  return value === undefined ? undefined : value ? "?1" : "?0";
-}
-
-function quotedList(values?: string[]) {
-  return values?.map((value) => `"${value}"`).join(", ");
-}
-
-/**
- * getClientHints returns the browser's client hints keyed by their HTTP header names.
- * Only what the browser actually exposes is included: browsers without the API, or a user agent
- * that declines high entropy values, yield an empty object rather than invented values.
- */
-export async function getClientHints(): Promise<Record<string, string>> {
+/** Returns native browser hints, falling back to low entropy values if needed. */
+export async function getClientHints() {
   const uaData = userAgentData();
   if (!uaData) {
     return {};
   }
 
-  let highEntropy: Awaited<ReturnType<NonNullable<NavigatorUAData["getHighEntropyValues"]>>> = {};
-  if (uaData.getHighEntropyValues) {
-    try {
-      highEntropy = await uaData.getHighEntropyValues(HIGH_ENTROPY_HINTS);
-    } catch {
-      return {};
-    }
+  const { brands, mobile, platform } = uaData;
+  try {
+    return (await uaData.getHighEntropyValues?.(HIGH_ENTROPY_HINTS)) ?? { brands, mobile, platform };
+  } catch {
+    return { brands, mobile, platform };
   }
-
-  const hints: Record<string, [string | undefined]> = {
-    "Sec-CH-UA": [brandList(highEntropy.brands ?? uaData.brands)],
-    "Sec-CH-UA-Arch": [highEntropy.architecture],
-    "Sec-CH-UA-Bitness": [highEntropy.bitness],
-    "Sec-CH-UA-Form-Factors": [quotedList(highEntropy.formFactors)],
-    "Sec-CH-UA-Full-Version": [highEntropy.uaFullVersion],
-    "Sec-CH-UA-Full-Version-List": [brandList(highEntropy.fullVersionList)],
-    "Sec-CH-UA-Mobile": [boolHint(highEntropy.mobile ?? uaData.mobile)],
-    "Sec-CH-UA-Model": [highEntropy.model],
-    "Sec-CH-UA-Platform": [highEntropy.platform ?? uaData.platform],
-    "Sec-CH-UA-Platform-Version": [highEntropy.platformVersion],
-    "Sec-CH-UA-WoW64": [boolHint(highEntropy.wow64)],
-  };
-
-  return Object.entries(hints).reduce<Record<string, string>>((collected, [name, [value]]) => {
-    if (value !== undefined && value !== "") {
-      collected[name] = value;
-    }
-
-    return collected;
-  }, {});
 }
 
 export async function getDeviceData() {

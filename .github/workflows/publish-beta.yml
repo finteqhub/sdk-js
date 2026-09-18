@@ -1,0 +1,29 @@
+on: workflow_dispatch
+
+permissions:
+  contents: read
+
+jobs:
+  publish-beta:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 16
+          cache: "npm"
+          registry-url: "https://registry.npmjs.org"
+          scope: "@finteqhub"
+      - run: npm ci
+      - name: Set beta version
+        run: |
+          BETA_VERSION=$(node scripts/next-beta-version.js)
+          npm version "$BETA_VERSION" --no-git-tag-version
+          node scripts/sync-version.js
+          echo "BETA_VERSION=$BETA_VERSION" >> "$GITHUB_ENV"
+      - run: npm run test
+      - run: npm run build
+      - run: npm publish --access public --tag beta
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - run: echo "Published \`@finteqhub/sdk-js@${BETA_VERSION}\` (dist-tag \`beta\`)" >> "$GITHUB_STEP_SUMMARY"
