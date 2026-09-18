@@ -265,7 +265,7 @@ describe(`function ${FinteqHubProcessing.prototype.submitForm.name} should work 
       body: JSON.stringify({
         session: {
           fingerprint: fingerprintVisitorId,
-          ...getDeviceData(),
+          ...(await getDeviceData()),
         },
         ...data,
       }),
@@ -369,6 +369,7 @@ describe(`function ${FinteqHubProcessing.prototype.submitForm.name} should work 
     document.body.removeChild = jest.fn();
     document.createElement = jest.fn(() => iframeMock) as jest.Mock;
 
+    const deviceData = await getDeviceData();
     const promise = processing.submitForm(data).then((res) => expect(res).toEqual(resolve));
 
     setTimeout(() => {
@@ -383,7 +384,7 @@ describe(`function ${FinteqHubProcessing.prototype.submitForm.name} should work 
         body: JSON.stringify({
           session: {
             fingerprint: fingerprintVisitorId,
-            ...getDeviceData(),
+            ...deviceData,
           },
           ...data,
         }),
@@ -527,7 +528,7 @@ describe(`function ${FinteqHubProcessing.prototype.submitForm.name} with secure 
       body: JSON.stringify({
         session: {
           fingerprint: fingerprintVisitorId,
-          ...getDeviceData(),
+          ...(await getDeviceData()),
         },
         ...data,
       }),
@@ -631,6 +632,7 @@ describe(`function ${FinteqHubProcessing.prototype.submitForm.name} with secure 
     document.body.removeChild = jest.fn();
     document.createElement = jest.fn(() => iframeMock) as jest.Mock;
 
+    const deviceData = await getDeviceData();
     const promise = processing.submitForm(data).then((res) => expect(res).toEqual(resolve));
 
     setTimeout(() => {
@@ -645,7 +647,7 @@ describe(`function ${FinteqHubProcessing.prototype.submitForm.name} with secure 
         body: JSON.stringify({
           session: {
             fingerprint: fingerprintVisitorId,
-            ...getDeviceData(),
+            ...deviceData,
           },
           ...data,
         }),
@@ -709,6 +711,62 @@ describe(`function ${FinteqHubProcessing.prototype.submitForm.name} with secure 
     }
 
     expect(fetchFn).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe.each([false, true])("client hints on submit (secure: %s)", (isSecure) => {
+  const originalUserAgentData = Object.getOwnPropertyDescriptor(navigator, "userAgentData");
+
+  afterEach(() => {
+    if (originalUserAgentData) {
+      Object.defineProperty(navigator, "userAgentData", originalUserAgentData);
+    } else {
+      delete (navigator as Navigator & { userAgentData?: unknown }).userAgentData;
+    }
+  });
+
+  test("awaits native hints and sends them without a device brand", async () => {
+    Object.defineProperty(navigator, "userAgentData", {
+      configurable: true,
+      value: {
+        brands: [{ brand: "Chromium", version: "130" }],
+        mobile: true,
+        platform: "Android",
+        getHighEntropyValues: async () => ({
+          brands: [{ brand: "Chromium", version: "130" }],
+          mobile: true,
+          platform: "Android",
+          model: "Pixel 3 XL",
+        }),
+      },
+    });
+    const fetchFn = (window.fetch = jest.fn()
+      .mockResolvedValueOnce({
+        status: 200,
+        text: async () => JSON.stringify({ operationId: "operation.id" }),
+      })
+      .mockResolvedValueOnce({
+        status: 200,
+        text: async () => JSON.stringify({ type: "redirect", redirectUrl: "redirect.url" }),
+      }));
+    const processing = new FinteqHubProcessing(
+      "api-url", "fingerprint", "merchant-id", "session-id", isSecure
+    );
+
+    await expect(processing.submitForm({ paymentMethod: "card-acquirer", credentials: {} }))
+      .resolves.toEqual({ type: "redirect", redirectUrl: "redirect.url" });
+
+    const [url, request] = fetchFn.mock.calls[0];
+    expect(url).toBe(`api-url/v1/${isSecure ? "secure/" : ""}transactions/submit-form`);
+    const payload = JSON.parse(request.body);
+    expect(payload.session.fingerprint).toBe("fingerprint");
+    expect(payload.session.device.browser.clientHints).toEqual({
+      brands: [{ brand: "Chromium", version: "130" }],
+      mobile: true,
+      platform: "Android",
+      model: "Pixel 3 XL",
+    });
+    expect(payload.session.device).not.toHaveProperty("brandName");
   });
 });
 

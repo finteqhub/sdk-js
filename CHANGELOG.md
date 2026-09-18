@@ -2,6 +2,13 @@
 
 Notable changes to `@finteqhub/sdk-js`. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## 0.15.0
+
+### Added
+
+- Form submissions include `session.device.browser.clientHints` when `navigator.userAgentData` is available, for both regular and secure endpoints. The SDK forwards native browser keys and values, including the high-entropy device model, for backend device-brand detection; it does not send a device brand itself.
+- If high-entropy values are unavailable or rejected, the SDK sends the available low-entropy `brands`, `mobile` and `platform` values. Browsers without the API omit `clientHints` entirely. The public SDK API is unchanged.
+
 ## 0.14.0
 
 ### Breaking changes
