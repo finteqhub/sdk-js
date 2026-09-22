@@ -90,7 +90,6 @@ const defaultRetryStatusCode = (statusCode: number) =>
 export class FinteqHubProcessing {
   private apiUrl: string;
   private fingerprintVisitorId: string;
-  private merchantId: string;
   private sessionId: string;
   private projectId: string;
   private isSecure: boolean;
@@ -99,16 +98,14 @@ export class FinteqHubProcessing {
   constructor(
     apiUrl: string,
     fingerprintVisitorId: string,
-    merchantId: string,
     sessionId: string,
     isSecure: boolean = false,
     retryOptions: RetryOptions = {}
   ) {
-    validateArguments({ apiUrl, fingerprintVisitorId, merchantId, sessionId, isSecure, retryOptions });
+    validateArguments({ apiUrl, fingerprintVisitorId, sessionId, isSecure, retryOptions });
 
     this.apiUrl = apiUrl;
     this.fingerprintVisitorId = fingerprintVisitorId;
-    this.merchantId = merchantId;
     this.sessionId = sessionId;
     this.isSecure = isSecure;
     this.retryOptions = retryOptions;

@@ -1,18 +1,16 @@
 # processing-sdk
 
-Use `new FinteqHubProcessing(apiUrl: string, fingerprintVisitorId: string, merchantId: string, sessionId: string, isSecure?: boolean, retryOptions?: RetryOptions)` to create an instance of the FinteqHubProcessing object. The FinteqHubProcessing object is your entrypoint to FinteqHub processing SDK.
+Use `new FinteqHubProcessing(apiUrl: string, fingerprintVisitorId: string, sessionId: string, isSecure?: boolean, retryOptions?: RetryOptions)` to create an instance of the FinteqHubProcessing object. The FinteqHubProcessing object is your entrypoint to FinteqHub processing SDK.
 
 ```
-const processing = new FinteqHubProcessing('api-url', 'fingerprint-visitor-id', 'merchant-id', 'session-id');
+const processing = new FinteqHubProcessing('api-url', 'fingerprint-visitor-id', 'session-id');
 ```
 
 The constructor validates its arguments and throws a `TypeError` when `apiUrl`, `fingerprintVisitorId` or `sessionId` is missing, empty or not a string, when `isSecure` is not a boolean, or when `retryOptions` is malformed (see [Retries and error diagnostics](#retries-and-error-diagnostics)).
 
-`merchantId` is accepted for compatibility but is neither validated nor sent to the API since 0.16.0.
-
 ## Retries and error diagnostics
 
-Failed HTTP requests are retried automatically with exponential backoff (`100ms → 200ms → 500ms → 1000ms → 2000ms`; every retry after the fifth waits 2000ms). Retries can be configured via the optional `retryOptions` constructor argument (the sixth one, after `isSecure`):
+Failed HTTP requests are retried automatically with exponential backoff (`100ms → 200ms → 500ms → 1000ms → 2000ms`; every retry after the fifth waits 2000ms). Retries can be configured via the optional `retryOptions` constructor argument (the fifth one, after `isSecure`):
 
 ```
 interface RetryOptions {
@@ -20,7 +18,7 @@ interface RetryOptions {
   retryStatusCode?: (statusCode: number) => boolean; // default: statusCode < 200 || statusCode === 408 || statusCode >= 500
 }
 
-const processing = new FinteqHubProcessing('api-url', 'fingerprint-visitor-id', 'merchant-id', 'session-id', false, {
+const processing = new FinteqHubProcessing('api-url', 'fingerprint-visitor-id', 'session-id', false, {
   retryCount: 3,
 });
 ```
@@ -28,7 +26,7 @@ const processing = new FinteqHubProcessing('api-url', 'fingerprint-visitor-id', 
 To disable retries entirely, pass `retryCount: 0` — every request is then sent exactly once, as in 0.11.0. Error diagnostics (`RequestError`, the `console.error` dump) are still collected:
 
 ```
-const processing = new FinteqHubProcessing('api-url', 'fingerprint-visitor-id', 'merchant-id', 'session-id', false, {
+const processing = new FinteqHubProcessing('api-url', 'fingerprint-visitor-id', 'session-id', false, {
   retryCount: 0,
 });
 ```
@@ -91,6 +89,10 @@ processing
 
 ## Usage
 
+### Submit only
+
+The minimal flow is to construct the instance and call `submitForm` — no other request is needed before it. Use it when your own UI already knows what to collect from the customer (for example, the payment method and its credential fields are fixed on your side):
+
 ```
 import { FinteqHubProcessing } from "@finteqhub/sdk-js";
 import FingerprintJS from "@fingerprintjs/fingerprintjs";
@@ -98,12 +100,26 @@ import FingerprintJS from "@fingerprintjs/fingerprintjs";
 const fp = await FingerprintJS.load();
 const result = await fp.get();
 
-const processing = new FinteqHubProcessing(apiUrl, result.visitorId, merchantId, sessionId);
+const processing = new FinteqHubProcessing(apiUrl, result.visitorId, sessionId);
 
-// optional: only needed to render the form from session data
+const data = {/** collect data from form **/}
+
+processing
+  .submitForm(data)
+  .then(result => console.log(result))
+  .catch(error => console.warn(error));
+```
+
+### Render the form from session data
+
+Call `getSession` first when the form itself is built from the session: available payment methods, their credential fields, the operation amount and currency. `submitForm` does not use the result — it only drives your UI:
+
+```
+const processing = new FinteqHubProcessing(apiUrl, result.visitorId, sessionId);
+
 const session = await processing.getSession();
 
-const data = {/** collect data from form (and session, if fetched) **/}
+const data = {/** collect data from form rendered from session **/}
 
 processing
   .submitForm(data)

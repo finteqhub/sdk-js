@@ -59,7 +59,6 @@ export function getDeviceType() {
 type ConstructorArguments = {
   apiUrl: string;
   fingerprintVisitorId: string;
-  merchantId: string;
   sessionId: string;
   isSecure: boolean;
   retryOptions: RetryOptions;

@@ -71,7 +71,6 @@ describe(`function ${validateArguments.name} should work correctly`, () => {
   const args: Args = {
     apiUrl: "api-url",
     fingerprintVisitorId: "fingerprint-visitor-id",
-    merchantId: "merchant-id",
     sessionId: "session-id",
     isSecure: false,
     retryOptions: {},
