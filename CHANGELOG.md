@@ -4,9 +4,12 @@ Notable changes to `@finteqhub/sdk-js`. The format is based on [Keep a Changelog
 
 ## 0.16.0
 
-### Changed
+### Breaking changes
 
 - The SDK no longer sends the `x-merchant-id` header (previously on every request) or the `x-project-id` header (previously on `submit-form` and `operations` requests, taken from the session response). The constructor signature is unchanged: `merchantId` is still accepted, but it is no longer validated (the constructor does not throw when it is empty or missing) and is not transmitted. This release requires a backend that no longer expects these headers; against older backends `submit-form` and `sessions` requests are rejected with 400.
+
+### Changed
+
 - README: `getSession` is documented as optional. `submitForm` never depended on the session response apart from `projectId`, which is no longer sent.
 
 ## 0.15.0
