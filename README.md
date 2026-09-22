@@ -69,7 +69,7 @@ The header is added automatically to every request and cannot be disabled.
 
 ### processing.getSession()
 
-Use `processing.getSession` to get session information.
+Use `processing.getSession` to get session information (payment methods, credential fields, operation amount and currency, init credentials) for rendering the form. It is optional: `submitForm` does not depend on it and can be called right after constructing the instance.
 
 ```
 processing
@@ -99,9 +99,11 @@ const fp = await FingerprintJS.load();
 const result = await fp.get();
 
 const processing = new FinteqHubProcessing(apiUrl, result.visitorId, merchantId, sessionId);
+
+// optional: only needed to render the form from session data
 const session = await processing.getSession();
 
-const data = {/** collect data from form and session **/}
+const data = {/** collect data from form (and session, if fetched) **/}
 
 processing
   .submitForm(data)
