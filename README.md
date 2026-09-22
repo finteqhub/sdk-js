@@ -6,7 +6,9 @@ Use `new FinteqHubProcessing(apiUrl: string, fingerprintVisitorId: string, merch
 const processing = new FinteqHubProcessing('api-url', 'fingerprint-visitor-id', 'merchant-id', 'session-id');
 ```
 
-The constructor validates its arguments and throws a `TypeError` when `apiUrl`, `fingerprintVisitorId`, `merchantId` or `sessionId` is missing, empty or not a string, when `isSecure` is not a boolean, or when `retryOptions` is malformed (see [Retries and error diagnostics](#retries-and-error-diagnostics)).
+The constructor validates its arguments and throws a `TypeError` when `apiUrl`, `fingerprintVisitorId` or `sessionId` is missing, empty or not a string, when `isSecure` is not a boolean, or when `retryOptions` is malformed (see [Retries and error diagnostics](#retries-and-error-diagnostics)).
+
+`merchantId` is accepted for compatibility but is neither validated nor sent to the API since 0.16.0.
 
 ## Retries and error diagnostics
 

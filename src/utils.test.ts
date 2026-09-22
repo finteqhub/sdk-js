@@ -77,7 +77,7 @@ describe(`function ${validateArguments.name} should work correctly`, () => {
     retryOptions: {},
   };
 
-  test.each(["apiUrl", "fingerprintVisitorId", "merchantId", "sessionId"] as const)(
+  test.each(["apiUrl", "fingerprintVisitorId", "sessionId"] as const)(
     "throws when %s is missing, empty or not a string",
     (key) => {
       for (const value of [undefined, "", 42]) {

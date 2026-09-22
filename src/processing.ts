@@ -123,7 +123,6 @@ export class FinteqHubProcessing {
           method: "GET",
           headers: {
             "Content-Type": "application/json;charset=UTF-8",
-            "x-merchant-id": this.merchantId,
             "x-request-id": uuid(),
             [SDK_HEADER_NAME]: SDK_HEADER_VALUE,
           },
@@ -199,11 +198,9 @@ export class FinteqHubProcessing {
       method: "POST",
       headers: {
         "Content-Type": "application/json;charset=UTF-8",
-        "x-merchant-id": this.merchantId,
         "x-request-id": uuid(),
         "x-fingerprint": this.fingerprintVisitorId,
         "x-session-id": this.sessionId,
-        "x-project-id": this.projectId,
         [SDK_HEADER_NAME]: SDK_HEADER_VALUE,
       },
       body: JSON.stringify(data),
