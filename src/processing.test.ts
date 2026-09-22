@@ -61,7 +61,6 @@ describe(`function ${FinteqHubProcessing.prototype.getSession.name} should work 
       method: "GET",
       headers: {
         "Content-Type": "application/json;charset=UTF-8",
-        "x-merchant-id": merchantId,
         "x-request-id": expect.anything(),
         [SDK_HEADER_NAME]: SDK_HEADER_VALUE,
       },
@@ -147,7 +146,6 @@ describe(`function ${FinteqHubProcessing.prototype.getSession.name} with secure 
       method: "GET",
       headers: {
         "Content-Type": "application/json;charset=UTF-8",
-        "x-merchant-id": merchantId,
         "x-request-id": expect.anything(),
         [SDK_HEADER_NAME]: SDK_HEADER_VALUE,
       },
@@ -230,7 +228,6 @@ describe(`function ${FinteqHubProcessing.prototype.submitForm.name} should work 
 
   const headers = {
     "Content-Type": "application/json;charset=UTF-8",
-    "x-merchant-id": merchantId,
     "x-request-id": expect.anything(),
     "x-fingerprint": fingerprintVisitorId,
     "x-session-id": sessionId,
@@ -275,6 +272,37 @@ describe(`function ${FinteqHubProcessing.prototype.submitForm.name} should work 
       headers,
       body: JSON.stringify({}),
     });
+  });
+
+  test(`works without a prior getSession call and without merchantId, and sends no merchant or project headers`, async () => {
+    let count = 0;
+    const resolve = {
+      type: "redirect",
+      redirectUrl,
+    };
+
+    const fetchFn = (window.fetch = jest.fn(() => {
+      count += 1;
+      return Promise.resolve({
+        status: 200,
+        text: () => Promise.resolve(JSON.stringify(count === 1 ? { operationId } : resolve)),
+      });
+    }) as jest.Mock);
+
+    const fresh = new FinteqHubProcessing(apiUrl, fingerprintVisitorId, "", sessionId);
+    const res = await fresh.submitForm(data);
+    expect(res).toEqual(resolve);
+
+    expect(fetchFn).toHaveBeenCalledTimes(2);
+    for (const [url, options] of fetchFn.mock.calls as [string, RequestInit][]) {
+      expect(url).toMatch(/^api-url\/v1\/(transactions\/submit-form|operations\/operation\.id)$/);
+      const headerNames = Object.keys(options.headers as Record<string, string>);
+      expect(headerNames).not.toContain("x-merchant-id");
+      expect(headerNames).not.toContain("x-project-id");
+      expect(headerNames).toEqual(
+        expect.arrayContaining(["x-request-id", "x-fingerprint", "x-session-id", SDK_HEADER_NAME])
+      );
+    }
   });
 
   test(`should type: wait works correctly`, async () => {
@@ -493,7 +521,6 @@ describe(`function ${FinteqHubProcessing.prototype.submitForm.name} with secure 
 
   const headers = {
     "Content-Type": "application/json;charset=UTF-8",
-    "x-merchant-id": merchantId,
     "x-request-id": expect.anything(),
     "x-fingerprint": fingerprintVisitorId,
     "x-session-id": sessionId,

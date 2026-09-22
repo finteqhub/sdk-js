@@ -65,7 +65,7 @@ type ConstructorArguments = {
   retryOptions: RetryOptions;
 };
 
-const REQUIRED_STRINGS = ["apiUrl", "fingerprintVisitorId", "merchantId", "sessionId"] as const;
+const REQUIRED_STRINGS = ["apiUrl", "fingerprintVisitorId", "sessionId"] as const;
 
 export function validateArguments(args: ConstructorArguments) {
   for (const key of REQUIRED_STRINGS) {

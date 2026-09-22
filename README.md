@@ -6,7 +6,9 @@ Use `new FinteqHubProcessing(apiUrl: string, fingerprintVisitorId: string, merch
 const processing = new FinteqHubProcessing('api-url', 'fingerprint-visitor-id', 'merchant-id', 'session-id');
 ```
 
-The constructor validates its arguments and throws a `TypeError` when `apiUrl`, `fingerprintVisitorId`, `merchantId` or `sessionId` is missing, empty or not a string, when `isSecure` is not a boolean, or when `retryOptions` is malformed (see [Retries and error diagnostics](#retries-and-error-diagnostics)).
+The constructor validates its arguments and throws a `TypeError` when `apiUrl`, `fingerprintVisitorId` or `sessionId` is missing, empty or not a string, when `isSecure` is not a boolean, or when `retryOptions` is malformed (see [Retries and error diagnostics](#retries-and-error-diagnostics)).
+
+`merchantId` is accepted for compatibility but is neither validated nor sent to the API since 0.16.0.
 
 ## Retries and error diagnostics
 
@@ -67,7 +69,7 @@ The header is added automatically to every request and cannot be disabled.
 
 ### processing.getSession()
 
-Use `processing.getSession` to get session information.
+Use `processing.getSession` to get session information (payment methods, credential fields, operation amount and currency, init credentials) for rendering the form. It is optional: `submitForm` does not depend on it and can be called right after constructing the instance.
 
 ```
 processing
@@ -97,9 +99,11 @@ const fp = await FingerprintJS.load();
 const result = await fp.get();
 
 const processing = new FinteqHubProcessing(apiUrl, result.visitorId, merchantId, sessionId);
+
+// optional: only needed to render the form from session data
 const session = await processing.getSession();
 
-const data = {/** collect data from form and session **/}
+const data = {/** collect data from form (and session, if fetched) **/}
 
 processing
   .submitForm(data)
