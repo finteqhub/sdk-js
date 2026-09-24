@@ -2,6 +2,25 @@
 
 Notable changes to `@finteqhub/sdk-js`. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## 0.17.0
+
+### Breaking changes
+
+- `FinteqHubProcessing` was renamed to `Processing`. The old name is no longer exported.
+- The constructor takes a single options object instead of positional arguments. The object is validated like the positional arguments were; passing positional arguments throws `TypeError: sdk-js: constructor expects an options object`. The new `ProcessingOptions` type is exported.
+
+Migration:
+
+```
+// 0.16.0
+new FinteqHubProcessing(apiUrl, fingerprintVisitorId, sessionId, isSecure, retryOptions);
+
+// 0.17.0
+new Processing({ apiUrl, fingerprintVisitorId, sessionId, isSecure, retryOptions });
+```
+
+`isSecure` and `retryOptions` stay optional, with the same defaults (`false` and `{}`).
+
 ## 0.16.0
 
 ### Breaking changes

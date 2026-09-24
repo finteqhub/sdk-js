@@ -87,6 +87,12 @@ describe(`function ${validateArguments.name} should work correctly`, () => {
     }
   );
 
+  test("throws when options is not an object", () => {
+    for (const options of [undefined, null, "api-url"]) {
+      expect(() => validateArguments(options as unknown as Args)).toThrow("sdk-js: constructor expects an options object");
+    }
+  });
+
   test("throws when isSecure is not a boolean", () => {
     for (const isSecure of ["yes", null, 1]) {
       expect(() => validateArguments({ ...args, isSecure } as unknown as Args)).toThrow("sdk-js: isSecure must be a boolean");
@@ -117,6 +123,9 @@ describe(`function ${validateArguments.name} should work correctly`, () => {
 
   test("accepts valid arguments", () => {
     expect(() => validateArguments(args)).not.toThrow();
+    expect(() =>
+      validateArguments({ apiUrl: "api-url", fingerprintVisitorId: "fingerprint-visitor-id", sessionId: "session-id" })
+    ).not.toThrow();
     expect(() =>
       validateArguments({ ...args, isSecure: true, retryOptions: { retryCount: 0, retryStatusCode: () => false } })
     ).not.toThrow();

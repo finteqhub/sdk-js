@@ -1,4 +1,4 @@
-import type { RetryOptions } from "./processing";
+import type { ProcessingOptions } from "./processing";
 
 export const DeviceType = {
   Unknown: "unknown",
@@ -56,26 +56,22 @@ export function getDeviceType() {
   return DeviceType.Unknown;
 }
 
-type ConstructorArguments = {
-  apiUrl: string;
-  fingerprintVisitorId: string;
-  sessionId: string;
-  isSecure: boolean;
-  retryOptions: RetryOptions;
-};
-
 const REQUIRED_STRINGS = ["apiUrl", "fingerprintVisitorId", "sessionId"] as const;
 
-export function validateArguments(args: ConstructorArguments) {
+export function validateArguments(options: ProcessingOptions) {
+  // catches callers still using the positional signature from 0.16.0 and earlier
+  if (typeof options !== "object" || options === null) {
+    throw new TypeError("sdk-js: constructor expects an options object");
+  }
   for (const key of REQUIRED_STRINGS) {
-    if (typeof args[key] !== "string" || args[key] === "") {
+    if (typeof options[key] !== "string" || options[key] === "") {
       throw new TypeError(`sdk-js: ${key} must be a non-empty string`);
     }
   }
-  if (typeof args.isSecure !== "boolean") {
+  const { isSecure = false, retryOptions = {} } = options;
+  if (typeof isSecure !== "boolean") {
     throw new TypeError("sdk-js: isSecure must be a boolean");
   }
-  const { retryOptions } = args;
   if (typeof retryOptions !== "object" || retryOptions === null) {
     throw new TypeError("sdk-js: retryOptions must be an object");
   }
