@@ -1,13 +1,32 @@
 # Changelog
 
-Notable changes to `@finteqhub/sdk-js`. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
+Notable changes to the SDK. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
+
+## 0.17.0
+
+### Breaking changes
+
+- The SDK class is now exported as `Processing`; the previous class name is no longer exported.
+- The constructor takes a single options object instead of positional arguments. The object is validated like the positional arguments were; passing positional arguments throws `TypeError: sdk-js: constructor expects an options object`. Unknown keys are rejected too (`TypeError: sdk-js: unknown option "issecure"`), so a misspelled option, or a `merchantId` left over from 0.15.0, fails loudly instead of silently falling back to the default. The new `ProcessingOptions` type is exported.
+
+Migration:
+
+```
+// 0.16.0: positional arguments
+(apiUrl, fingerprintVisitorId, sessionId, isSecure, retryOptions)
+
+// 0.17.0: an options object
+new Processing({ apiUrl, fingerprintVisitorId, sessionId, isSecure, retryOptions });
+```
+
+`isSecure` and `retryOptions` stay optional, with the same defaults (`false` and `{}`).
 
 ## 0.16.0
 
 ### Breaking changes
 
 - The SDK no longer sends the `x-merchant-id` header (previously on every request) or the `x-project-id` header (previously on `submit-form` and `operations` requests, taken from the session response). This release requires a backend that no longer expects these headers; against older backends `submit-form` and `sessions` requests are rejected with 400.
-- The `merchantId` constructor argument was removed together with the header. The constructor is now `new FinteqHubProcessing(apiUrl, fingerprintVisitorId, sessionId, isSecure?, retryOptions?)` — every argument after `fingerprintVisitorId` shifts one position to the left. Callers must drop the third argument; a call site that still passes it fails argument validation (`isSecure` receives the session id, which is not a boolean, and the constructor throws a `TypeError`).
+- The `merchantId` constructor argument was removed together with the header. The constructor arguments are now `(apiUrl, fingerprintVisitorId, sessionId, isSecure?, retryOptions?)` — every argument after `fingerprintVisitorId` shifts one position to the left. Callers must drop the third argument; a call site that still passes it fails argument validation (`isSecure` receives the session id, which is not a boolean, and the constructor throws a `TypeError`).
 
 ### Changed
 
@@ -41,7 +60,7 @@ No code changes: the SDK behaves exactly as in 0.13.0 (only the version reported
 
 ### Breaking changes
 
-- The SDK identification header sent with every request was renamed from `X-Finteqhub-SDK` to `x-pgw-sdk`, now spelled in lower case to match the other headers the SDK sends. Header names are case-insensitive, so only the name itself changed; the value format (`sdk-js/<version>`) is unchanged.
+- The SDK identification header sent with every request was renamed to `x-pgw-sdk`, spelled in lower case to match the other headers the SDK sends. Backends that read the header by its previous name must switch to `x-pgw-sdk`; the value format (`sdk-js/<version>`) is unchanged.
 
 ## 0.12.0
 

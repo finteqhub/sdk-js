@@ -22,6 +22,14 @@ export interface RetryOptions {
   retryStatusCode?: (statusCode: number) => boolean;
 }
 
+export interface ProcessingOptions {
+  apiUrl: string;
+  fingerprintVisitorId: string;
+  sessionId: string;
+  isSecure?: boolean;
+  retryOptions?: RetryOptions;
+}
+
 export type RequestAttempt = {
   durationMs: number;
   status?: number; // present when the server responded (headers received)
@@ -87,7 +95,7 @@ const sanitizeBody = (body: string) => body.slice(0, MAX_BODY_SNIPPET_LENGTH).re
 const defaultRetryStatusCode = (statusCode: number) =>
   statusCode < 200 || statusCode === 408 || statusCode >= 500;
 
-export class FinteqHubProcessing {
+export class Processing {
   private apiUrl: string;
   private fingerprintVisitorId: string;
   private sessionId: string;
@@ -95,14 +103,9 @@ export class FinteqHubProcessing {
   private isSecure: boolean;
   private retryOptions: RetryOptions;
 
-  constructor(
-    apiUrl: string,
-    fingerprintVisitorId: string,
-    sessionId: string,
-    isSecure: boolean = false,
-    retryOptions: RetryOptions = {}
-  ) {
-    validateArguments({ apiUrl, fingerprintVisitorId, sessionId, isSecure, retryOptions });
+  constructor(options: ProcessingOptions) {
+    validateArguments(options);
+    const { apiUrl, fingerprintVisitorId, sessionId, isSecure = false, retryOptions = {} } = options;
 
     this.apiUrl = apiUrl;
     this.fingerprintVisitorId = fingerprintVisitorId;
