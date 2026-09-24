@@ -6,16 +6,16 @@ Notable changes to `@finteqhub/sdk-js`. The format is based on [Keep a Changelog
 
 ### Breaking changes
 
-- `FinteqHubProcessing` was renamed to `Processing`. The old name is no longer exported.
+- The SDK class is now exported as `Processing`; the previous class name is no longer exported.
 - The constructor takes a single options object instead of positional arguments. The object is validated like the positional arguments were; passing positional arguments throws `TypeError: sdk-js: constructor expects an options object`. The new `ProcessingOptions` type is exported.
 
 Migration:
 
 ```
-// 0.16.0
-new FinteqHubProcessing(apiUrl, fingerprintVisitorId, sessionId, isSecure, retryOptions);
+// 0.16.0: positional arguments
+(apiUrl, fingerprintVisitorId, sessionId, isSecure, retryOptions)
 
-// 0.17.0
+// 0.17.0: an options object
 new Processing({ apiUrl, fingerprintVisitorId, sessionId, isSecure, retryOptions });
 ```
 
@@ -26,7 +26,7 @@ new Processing({ apiUrl, fingerprintVisitorId, sessionId, isSecure, retryOptions
 ### Breaking changes
 
 - The SDK no longer sends the `x-merchant-id` header (previously on every request) or the `x-project-id` header (previously on `submit-form` and `operations` requests, taken from the session response). This release requires a backend that no longer expects these headers; against older backends `submit-form` and `sessions` requests are rejected with 400.
-- The `merchantId` constructor argument was removed together with the header. The constructor is now `new FinteqHubProcessing(apiUrl, fingerprintVisitorId, sessionId, isSecure?, retryOptions?)` — every argument after `fingerprintVisitorId` shifts one position to the left. Callers must drop the third argument; a call site that still passes it fails argument validation (`isSecure` receives the session id, which is not a boolean, and the constructor throws a `TypeError`).
+- The `merchantId` constructor argument was removed together with the header. The constructor arguments are now `(apiUrl, fingerprintVisitorId, sessionId, isSecure?, retryOptions?)` — every argument after `fingerprintVisitorId` shifts one position to the left. Callers must drop the third argument; a call site that still passes it fails argument validation (`isSecure` receives the session id, which is not a boolean, and the constructor throws a `TypeError`).
 
 ### Changed
 

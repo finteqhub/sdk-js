@@ -1,6 +1,6 @@
 # processing-sdk
 
-Use `new Processing(options: ProcessingOptions)` to create an instance of the Processing object. The Processing object is your entrypoint to FinteqHub processing SDK.
+Use `new Processing(options: ProcessingOptions)` to create an instance of the Processing object. The Processing object is your entrypoint to the processing SDK.
 
 ```
 interface ProcessingOptions {
@@ -77,7 +77,7 @@ Every request the SDK makes carries an extra header:
 x-pgw-sdk: sdk-js/<version>
 ```
 
-The value contains the SDK name and version (kept in sync with `package.json` by a test) — for example `sdk-js/0.11.0`. FinteqHub uses this header to identify traffic coming from the official SDK integration — for example to notify affected merchants when a security fix is released. It does not affect authentication or request routing.
+The value contains the SDK name and version (kept in sync with `package.json` by a test) — for example `sdk-js/0.11.0`. The backend uses this header to identify traffic coming from the official SDK integration — for example to notify affected merchants when a security fix is released. It does not affect authentication or request routing.
 
 The header is added automatically to every request and cannot be disabled.
 
