@@ -7,7 +7,7 @@ Notable changes to the SDK. The format is based on [Keep a Changelog](https://ke
 ### Breaking changes
 
 - The SDK class is now exported as `Processing`; the previous class name is no longer exported.
-- The constructor takes a single options object instead of positional arguments. The object is validated like the positional arguments were; passing positional arguments throws `TypeError: sdk-js: constructor expects an options object`. The new `ProcessingOptions` type is exported.
+- The constructor takes a single options object instead of positional arguments. The object is validated like the positional arguments were; passing positional arguments throws `TypeError: sdk-js: constructor expects an options object`. Unknown keys are rejected too (`TypeError: sdk-js: unknown option "issecure"`), so a misspelled option, or a `merchantId` left over from 0.15.0, fails loudly instead of silently falling back to the default. The new `ProcessingOptions` type is exported.
 
 Migration:
 

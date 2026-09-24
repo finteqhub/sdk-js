@@ -93,6 +93,14 @@ describe(`function ${validateArguments.name} should work correctly`, () => {
     }
   });
 
+  test("throws on unknown options", () => {
+    for (const key of ["issecure", "retryOption", "merchantId"]) {
+      expect(() => validateArguments({ ...args, [key]: true } as unknown as Args)).toThrow(
+        `sdk-js: unknown option "${key}"`
+      );
+    }
+  });
+
   test("throws when isSecure is not a boolean", () => {
     for (const isSecure of ["yes", null, 1]) {
       expect(() => validateArguments({ ...args, isSecure } as unknown as Args)).toThrow("sdk-js: isSecure must be a boolean");

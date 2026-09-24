@@ -18,7 +18,7 @@ const processing = new Processing({
 });
 ```
 
-The constructor validates its options and throws a `TypeError` when they are not an object, when `apiUrl`, `fingerprintVisitorId` or `sessionId` is missing, empty or not a string, when `isSecure` is not a boolean, or when `retryOptions` is malformed (see [Retries and error diagnostics](#retries-and-error-diagnostics)).
+The constructor validates its options and throws a `TypeError` when they are not an object, when they contain an unknown key (for example a misspelled `issecure`), when `apiUrl`, `fingerprintVisitorId` or `sessionId` is missing, empty or not a string, when `isSecure` is not a boolean, or when `retryOptions` is malformed (see [Retries and error diagnostics](#retries-and-error-diagnostics)).
 
 ## Retries and error diagnostics
 

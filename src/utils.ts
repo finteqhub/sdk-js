@@ -57,11 +57,18 @@ export function getDeviceType() {
 }
 
 const REQUIRED_STRINGS = ["apiUrl", "fingerprintVisitorId", "sessionId"] as const;
+const KNOWN_OPTIONS = [...REQUIRED_STRINGS, "isSecure", "retryOptions"];
 
 export function validateArguments(options: ProcessingOptions) {
   // catches callers still using the positional signature from 0.16.0 and earlier
   if (typeof options !== "object" || options === null) {
     throw new TypeError("sdk-js: constructor expects an options object");
+  }
+  // a misspelled key (e.g. `issecure`) would otherwise silently fall back to the default
+  for (const key of Object.keys(options)) {
+    if (!KNOWN_OPTIONS.includes(key)) {
+      throw new TypeError(`sdk-js: unknown option "${key}"`);
+    }
   }
   for (const key of REQUIRED_STRINGS) {
     if (typeof options[key] !== "string" || options[key] === "") {
